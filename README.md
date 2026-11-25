@@ -1,5 +1,7 @@
 # Journal Library
 
+**Try it: [journal-library.pages.dev](https://journal-library.pages.dev)** (a made-up sample journal; press ▶ Demo for the tour)
+
 Your handwritten journal as a 3D bookshelf. Film yourself flipping through a notebook, and every page becomes a dated entry. Each year is a book on the shelf. Open one and you get months, then days, then the page itself next to what it says, plus everything you wrote on that same day in past years.
 
 - **Film a notebook, get pages.** It picks the sharp frames from a phone video, splits each spread into pages, reads your handwriting and finds the date on each page. You check the dates on a review board (D, F, G on the keyboard).
