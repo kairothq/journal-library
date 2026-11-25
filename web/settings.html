@@ -40,6 +40,7 @@
   .note { font-size:13px; color:var(--muted); margin:8px 0 0; max-width:60ch; }
   .reader-extra { margin-top:14px; display:grid; gap:12px; }
   .reader-extra[hidden] { display:none; }
+  .email-fields { display:grid; gap:12px; }
   label.check { display:flex; gap:10px; align-items:center; }
   .toast { position:fixed; left:50%; bottom:22px; transform:translate(-50%,30px); opacity:0; background:var(--surface); border:1px solid var(--line); padding:10px 16px; border-radius:10px; transition:.3s; }
   .toast.show { transform:translate(-50%,0); opacity:1; }
@@ -117,7 +118,7 @@
   <section>
     <div><h2>Morning email</h2><p>Pages from this day in past years, sent to you each morning.</p></div>
     <div>
-      <div class="reader-extra" style="margin-top:0">
+      <div class="email-fields">
         <label>Send it to<input type="email" id="email_to" placeholder="you@example.com"></label>
         <label>Send from (a Gmail address)<input type="email" id="email_from" placeholder="yourname@gmail.com" autocomplete="off"></label>
         <label>Gmail app password<input type="password" id="email_pw" autocomplete="off"></label>

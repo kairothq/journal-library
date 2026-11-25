@@ -38,6 +38,8 @@ Want to see it full first? `python3 scripts/demo.py add` fills it with a made-up
 
 The easiest way is any Gmail account and a Gmail **app password**. No domain or email service needed.
 
+An app password can send and read mail for the whole Gmail account it belongs to, not just this journal. So the safest setup is a spare Gmail account used only for sending (it can send to your main address). The journal only ever sends to the address you put in **Send it to**.
+
 1. On the Gmail account you want to send from, turn on [2-Step Verification](https://myaccount.google.com/signinoptions/two-step-verification).
 2. Open [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords), type `Journal` as the name and click Create. Copy the 16 letters.
 3. In the journal, open **Settings > Morning email**. Fill in where to send it, the Gmail address and the app password, pick a time, then click **Send a test now**.
