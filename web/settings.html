@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Journal Settings</title>
+<style>
+  :root {
+    --bg:#1a120d; --surface:#251a13; --ink:#efe3cf; --muted:#a8957d; --line:rgba(239,227,207,.14); --acc:#c99a5b; --acc-ink:#1a120d; --ok:#9cc48a; --bad:#e0796b;
+    --serif:"Young Serif", Georgia, serif; --sans:"Albert Sans", system-ui, sans-serif; --hand:"Caveat", cursive;
+  }
+  :root[data-theme="light"] { --bg:#d8d0c5; --surface:#cec5b8; --ink:#4a1d14; --muted:#7a5d50; --line:rgba(74,29,20,.18); --acc:#7a2a1a; --acc-ink:#f4ece1; --ok:#3f6b34; --bad:#a3392a; }
+  * { box-sizing:border-box; }
+  html { background:var(--bg); overflow-x:clip; }
+  body { margin:0; color:var(--ink); font:15px/1.55 var(--sans); }
+  :focus-visible { outline:2px solid var(--acc); outline-offset:3px; border-radius:4px; }
+  .wrap { max-width:860px; margin:0 auto; padding:48px 20px 96px; }
+  header { margin-bottom:34px; }
+  h1 { font:400 clamp(36px, 6vw, 54px)/1.05 var(--serif); margin:0 0 12px; }
+  nav { display:flex; gap:22px; font-weight:500; flex-wrap:wrap; }
+  nav a { color:var(--muted); text-decoration:none; } nav a:hover { color:var(--ink); }
+  section { display:grid; grid-template-columns:220px 1fr; gap:24px; padding:28px 0; border-top:1px solid var(--line); }
+  section > div:first-child h2 { font:400 21px/1.25 var(--serif); margin:0 0 6px; }
+  section > div:first-child p { color:var(--muted); margin:0; font-size:14px; }
+  .field { margin-bottom:18px; }
+  .field > span { display:block; font-weight:600; font-size:14px; margin-bottom:8px; }
+  .choices { display:flex; flex-wrap:wrap; gap:8px; }
+  .choice { border:1px solid var(--line); background:none; color:var(--ink); border-radius:10px; padding:9px 14px; cursor:pointer; font:500 14px var(--sans); text-align:left; }
+  .choice[aria-pressed="true"] { border-color:var(--acc); box-shadow:inset 0 0 0 1px var(--acc); }
+  .choice small { display:block; color:var(--muted); font-size:12px; font-weight:400; }
+  .sw { width:16px; height:16px; border-radius:50%; display:inline-block; vertical-align:-3px; margin-right:8px; }
+  .sample { display:block; font-size:22px; line-height:1.2; margin-bottom:2px; }
+  input[type=text], input[type=password], input[type=email], input[type=url], input[type=time] { width:100%; background:var(--surface); color:var(--ink); border:1px solid var(--line); border-radius:8px; padding:9px 11px; font:inherit; }
+  .row { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .row > input { flex:1; min-width:200px; }
+  .btn { background:var(--acc); color:var(--acc-ink); border:0; border-radius:8px; padding:10px 16px; font:600 14px var(--sans); cursor:pointer; }
+  .btn.quiet { background:none; color:var(--acc); padding:0; border-bottom:1px solid currentColor; border-radius:0; }
+  .msg { font-size:14px; margin-top:8px; color:var(--muted); min-height:20px; }
+  .msg.ok { color:var(--ok); } .msg.bad { color:var(--bad); }
+  .note { font-size:13px; color:var(--muted); margin:8px 0 0; max-width:60ch; }
+  .reader-extra { margin-top:14px; display:grid; gap:12px; }
+  .reader-extra[hidden] { display:none; }
+  label.check { display:flex; gap:10px; align-items:center; }
+  .toast { position:fixed; left:50%; bottom:22px; transform:translate(-50%,30px); opacity:0; background:var(--surface); border:1px solid var(--line); padding:10px 16px; border-radius:10px; transition:.3s; }
+  .toast.show { transform:translate(-50%,0); opacity:1; }
+  code { font-size:13px; background:var(--surface); padding:2px 6px; border-radius:5px; }
+  @media (max-width:720px) { section { grid-template-columns:1fr; gap:12px; } }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Newsreader:opsz,wght@6..72,500&family=DM+Serif+Display&family=Caveat:wght@600&family=Kalam&family=Patrick+Hand&family=Gochi+Hand&display=swap" rel="stylesheet">
+<script src="/theme.js"></script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Settings</h1>
+    <nav><a href="/library">Library</a><a href="/">Check dates</a><a href="/add">Add pages</a></nav>
+  </header>
+
+  <section>
+    <div><h2>Room</h2><p>How the journal looks on every screen.</p></div>
+    <div>
+      <div class="field"><span>Lamp</span><div class="choices" data-k="theme.lamp">
+        <button class="choice" data-v="remember">Remember my last pull</button><button class="choice" data-v="on">Always on</button><button class="choice" data-v="off">Always off</button></div></div>
+      <div class="field"><span>Accent</span><div class="choices" data-k="theme.accent">
+        <button class="choice" data-v="brass"><i class="sw" style="background:#b07a3e"></i>Brass and oxblood</button>
+        <button class="choice" data-v="forest"><i class="sw" style="background:#4f8a5a"></i>Forest</button>
+        <button class="choice" data-v="ink"><i class="sw" style="background:#4a6aa8"></i>Ink blue</button>
+        <button class="choice" data-v="plum"><i class="sw" style="background:#8a4a7a"></i>Plum</button></div></div>
+      <div class="field"><span>Headings and text</span><div class="choices" data-k="theme.fonts">
+        <button class="choice" data-v="classic"><b class="sample" style="font-family:'Young Serif'">Aa</b>Young Serif<small>with Albert Sans</small></button>
+        <button class="choice" data-v="editorial"><b class="sample" style="font-family:'Newsreader'">Aa</b>Newsreader<small>with Figtree</small></button>
+        <button class="choice" data-v="soft"><b class="sample" style="font-family:'DM Serif Display'">Aa</b>DM Serif<small>with DM Sans</small></button></div></div>
+      <div class="field"><span>Handwriting in the book</span><div class="choices" data-k="theme.hand">
+        <button class="choice" data-v="caveat"><b class="sample" style="font-family:'Caveat'">Dear diary</b>Caveat</button>
+        <button class="choice" data-v="kalam"><b class="sample" style="font-family:'Kalam'">Dear diary</b>Kalam<small>also writes Hindi</small></button>
+        <button class="choice" data-v="patrick"><b class="sample" style="font-family:'Patrick Hand'">Dear diary</b>Patrick Hand</button>
+        <button class="choice" data-v="gochi"><b class="sample" style="font-family:'Gochi Hand'">Dear diary</b>Gochi Hand</button></div></div>
+    </div>
+  </section>
+
+  <section>
+    <div><h2>Reading your pages</h2><p>What reads the handwriting and finds the dates when you add a video or photos.</p></div>
+    <div>
+      <div class="choices" data-k="reader.provider">
+        <button class="choice" data-v="vision">macOS Vision<small>On this Mac, private, rough on handwriting</small></button>
+        <button class="choice" data-v="ollama">Local model<small>On this Mac with Ollama, private, slower</small></button>
+        <button class="choice" data-v="anthropic">Claude<small>Your API key, pages go to Anthropic</small></button>
+        <button class="choice" data-v="bedrock">Amazon Bedrock<small>Your key, pages go to AWS</small></button>
+      </div>
+      <div class="reader-extra" data-for="ollama" hidden>
+        <label>Ollama address<input type="url" id="ollama_url"></label>
+        <label>Model<input type="text" id="ollama_model"></label>
+        <p class="note">Install Ollama from ollama.com, then run <code>ollama pull qwen2.5vl:3b</code>. Your pages never leave this Mac.</p>
+      </div>
+      <div class="reader-extra" data-for="anthropic" hidden>
+        <label>Claude API key<input type="password" id="anthropic_key" autocomplete="off"></label>
+        <label>Model<input type="text" id="anthropic_model"></label>
+      </div>
+      <div class="reader-extra" data-for="bedrock" hidden>
+        <label>Bedrock API key<input type="password" id="bedrock_key" autocomplete="off"></label>
+        <label>Model<input type="text" id="bedrock_model"></label>
+      </div>
+      <div class="row" style="margin-top:14px"><button class="btn" id="saveReader">Save</button><button class="btn quiet" id="testReader">Test it</button></div>
+      <div class="msg" id="readerMsg"></div>
+    </div>
+  </section>
+
+  <section>
+    <div><h2>Daily Log</h2><p>The Obsidian folder your phone shortcut writes to. Read only, checked every 5 minutes.</p></div>
+    <div>
+      <div class="row"><input type="text" id="obsidian_folder" aria-label="Obsidian Daily logs folder"><button class="btn" id="saveObs">Save</button></div>
+      <div class="row" style="margin-top:12px"><button class="btn quiet" id="syncNow">Check now</button></div>
+      <div class="msg" id="obsMsg"></div>
+    </div>
+  </section>
+
+  <section>
+    <div><h2>Morning email</h2><p>Pages from this day in past years, sent to you each morning.</p></div>
+    <div>
+      <div class="reader-extra" style="margin-top:0">
+        <label>Send it to<input type="email" id="email_to" placeholder="you@example.com"></label>
+        <label>Send from (a Gmail address)<input type="email" id="email_from" placeholder="yourname@gmail.com" autocomplete="off"></label>
+        <label>Gmail app password<input type="password" id="email_pw" autocomplete="off"></label>
+        <p class="note" style="margin:0">Not your normal password. Turn on 2-Step Verification for that Gmail, then open <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noopener">myaccount.google.com/apppasswords</a>, name it Journal and paste the 16 letters here.</p>
+        <div class="row"><label style="flex:0 0 auto">Time<input type="time" id="email_time" style="width:130px"></label>
+          <label style="flex:1;min-width:200px">Link to your journal (optional)<input type="url" id="email_link" placeholder="https://your-journal.pages.dev/library"></label></div>
+        <label class="check"><input type="checkbox" id="email_on"> Send it every morning</label>
+      </div>
+      <div class="row" style="margin-top:14px"><button class="btn" id="saveEmail">Save</button><button class="btn quiet" id="testEmail">Send a test now</button></div>
+      <p class="note">Sent from this Mac, so it goes out when the Mac is awake. If it was asleep at that time, it sends when it wakes. Days with nothing from past years are skipped.</p>
+      <div class="msg" id="emailMsg"></div>
+    </div>
+  </section>
+
+  <section>
+    <div><h2>Password</h2><p>Asked for whenever the journal is opened from another device.</p></div>
+    <div>
+      <div class="row"><input type="password" id="pw1" placeholder="New password" autocomplete="new-password" aria-label="New password"><input type="password" id="pw2" placeholder="Same again" autocomplete="new-password" aria-label="Repeat password"><button class="btn" id="savePw">Set password</button></div>
+      <label class="check" style="margin-top:14px"><input type="checkbox" id="lock_local"> Ask for it on this Mac too</label>
+      <div class="row" style="margin-top:12px"><button class="btn quiet" id="logout">Log out on this browser</button></div>
+      <div class="msg" id="pwMsg"></div>
+    </div>
+  </section>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const $ = s => document.querySelector(s);
+let S;
+const toast = m => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('show'), 2600); };
+const save = async patch => { const r = await fetch('/api/settings', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(patch) }).catch(() => null); if (!r || !r.ok) { toast('Not saved. The app isn\'t running.'); return null; } S = await r.json(); fill(); return S; };
+const msg = (id, text, ok) => { const m = $(id); m.textContent = text; m.className = 'msg' + (ok === true ? ' ok' : ok === false ? ' bad' : ''); };
+
+function fill(){
+  document.querySelectorAll('.choices[data-k]').forEach(g => { const [a, b] = g.dataset.k.split('.'); g.querySelectorAll('.choice').forEach(c => c.setAttribute('aria-pressed', S[a][b] === c.dataset.v)); });
+  const prov = S.reader.provider;
+  document.querySelectorAll('.reader-extra').forEach(x => x.hidden = x.dataset.for !== prov);
+  for (const k of ['ollama_url', 'ollama_model', 'anthropic_model', 'bedrock_model']) $('#' + k).value = S.reader[k];
+  $('#anthropic_key').placeholder = S.reader.has_anthropic_key ? 'Saved. Type to replace it' : 'sk-ant-…';
+  $('#bedrock_key').placeholder = S.reader.has_bedrock_key ? 'Saved. Type to replace it' : 'Paste the key';
+  $('#obsidian_folder').value = S.obsidian.folder;
+  $('#email_to').value = S.email.to; $('#email_time').value = S.email.time; $('#email_from').value = S.email.from; $('#email_link').value = S.email.link; $('#email_on').checked = S.email.on;
+  $('#email_pw').placeholder = S.email.has_app_password ? 'Saved. Type to replace it' : 'abcd efgh ijkl mnop';
+  $('#lock_local').checked = S.auth.lock_local;
+  $('#pw1').placeholder = S.auth.has_password ? 'New password (one is set)' : 'New password';
+}
+document.querySelectorAll('.choices[data-k]').forEach(g => g.onclick = async e => {
+  const c = e.target.closest('.choice'); if (!c) return;
+  const [a, b] = g.dataset.k.split('.');
+  if (a === 'reader') { S.reader.provider = c.dataset.v; fill(); return; }   // saved with the Save button below
+  await save({ [a]: { [b]: c.dataset.v } });
+  if (a === 'theme') { if (b === 'lamp' && c.dataset.v !== 'remember') try { localStorage.setItem('lamp', c.dataset.v); } catch (e) {} location.reload(); }
+});
+const readerPatch = () => ({ provider: S.reader.provider, ollama_url: $('#ollama_url').value.trim(), ollama_model: $('#ollama_model').value.trim(),
+  anthropic_key: $('#anthropic_key').value.trim(), anthropic_model: $('#anthropic_model').value.trim(), bedrock_key: $('#bedrock_key').value.trim(), bedrock_model: $('#bedrock_model').value.trim() });
+$('#saveReader').onclick = async () => { if (await save({ reader: readerPatch() })) { $('#anthropic_key').value = $('#bedrock_key').value = ''; msg('#readerMsg', 'Saved. New uploads use this reader.', true); } };
+$('#testReader').onclick = async () => { msg('#readerMsg', 'Checking…');
+  const r = await fetch('/api/settings/test', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(readerPatch()) }).then(r => r.json()).catch(() => null);
+  msg('#readerMsg', r ? r.message : 'The app isn\'t running.', r ? r.ok : false); };
+$('#saveObs').onclick = async () => { if (await save({ obsidian: { folder: $('#obsidian_folder').value.trim() } })) msg('#obsMsg', 'Saved.', true); };
+$('#syncNow').onclick = async () => { msg('#obsMsg', 'Checking Obsidian…');
+  const r = await fetch('/api/obsidian/sync', { method:'POST' }).then(r => r.json()).catch(() => null);
+  msg('#obsMsg', !r ? 'The app isn\'t running.' : r.error ? r.error : `${r.days} days in the journal, ${r.updated} new or changed.`, r && !r.error); };
+const emailPatch = () => ({ to: $('#email_to').value.trim(), from: $('#email_from').value.trim(), app_password: $('#email_pw').value.trim(), time: $('#email_time').value || '08:00', link: $('#email_link').value.trim(), on: $('#email_on').checked });
+const saveEmail = async () => { const r = await save({ email: emailPatch() }); if (r) $('#email_pw').value = ''; return r; };
+$('#saveEmail').onclick = async () => { const r = await saveEmail(); if (r) msg('#emailMsg', r.email.on ? `Saved. It sends every morning at ${r.email.time}.` : 'Saved. Tick "Send it every morning" to switch it on.', true); };
+$('#email_on').onchange = async e => { if (e.target.checked && !(S.email.has_app_password || $('#email_pw').value.trim())) { e.target.checked = false; return msg('#emailMsg', 'Add the Gmail app password first.', false); } const r = await saveEmail(); if (r) msg('#emailMsg', r.email.on ? `On. It sends every morning at ${r.email.time}.` : 'Off.', true); };
+$('#testEmail').onclick = async () => { if (!await saveEmail()) return; msg('#emailMsg', 'Sending…');
+  const r = await fetch('/api/email/test', { method:'POST' }).then(r => r.json()).catch(() => null);
+  msg('#emailMsg', r ? r.message : 'The app isn\'t running.', r ? r.ok : false); };
+$('#savePw').onclick = async () => {
+  const a = $('#pw1').value, b = $('#pw2').value;
+  if (a.length < 8) return msg('#pwMsg', 'Use at least 8 characters.', false);
+  if (a !== b) return msg('#pwMsg', 'The two passwords don\'t match.', false);
+  if (await save({ auth: { password: a } })) { $('#pw1').value = $('#pw2').value = ''; msg('#pwMsg', 'Password set.', true); }
+};
+$('#lock_local').onchange = async e => { if (e.target.checked && !S.auth.has_password) { e.target.checked = false; return msg('#pwMsg', 'Set a password first.', false); } await save({ auth: { lock_local: e.target.checked } }); };
+$('#logout').onclick = async () => { await fetch('/api/logout', { method:'POST' }); msg('#pwMsg', 'Logged out on this browser.', true); };
+fetch('/api/settings').then(r => r.json()).then(s => { S = s; fill(); });
+</script>
+</body>
+</html>

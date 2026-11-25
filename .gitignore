@@ -1,0 +1,13 @@
+# your journal: pages, photos, settings, password, sessions
+source/
+out/
+logs/
+# your Cloudflare ids
+deploy/wrangler.toml
+deploy/.wrangler/
+# built locally by ./setup.sh
+scripts/ocr
+scripts/bench_bedrock.py
+__pycache__/
+.gstack/
+.DS_Store

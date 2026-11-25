@@ -1,0 +1,8 @@
+# ./setup.sh host <name> copies this to wrangler.toml and fills it in.
+name = "your-journal"
+pages_build_output_dir = "public"
+compatibility_date = "2026-11-01"
+
+[[kv_namespaces]]
+binding = "TUNNEL"
+id = "PASTE_KV_ID"

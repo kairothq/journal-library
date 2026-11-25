@@ -1,0 +1,1036 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Journal Library</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Young+Serif&family=Albert+Sans:wght@400;500;600&family=Caveat:wght@500;600;700&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#f3e6cf; --fade:rgba(243,230,207,.55); --acc:#d9a35b; --bg:#110c08; }
+  :root[data-theme="light"] { --ink:#f8ecdb; --fade:rgba(248,236,219,.72); --acc:#f2b27a; --bg:#4e4038; }
+  html,body,#hud h1,#crumbs,#crumbs b,#hint,#back,#otd,#add,#set,#demo,#tip,#hud { transition:color 1.6s ease, background-color 1.6s ease, border-color 1.6s ease, opacity .4s; }
+  :root[data-theme="light"] #back, :root[data-theme="light"] #otd, :root[data-theme="light"] #add, :root[data-theme="light"] #set, :root[data-theme="light"] #tip { background:rgba(48,34,24,.42); border-color:rgba(242,178,122,.45); }
+  :root { --serif:"Young Serif",Georgia,serif; --sans:"Albert Sans",system-ui,sans-serif; --hand:Caveat,cursive; }
+  * { box-sizing:border-box; }
+  html,body { margin:0; height:100%; background:var(--bg); overflow:hidden; font-family:var(--sans); color:var(--ink); }
+  canvas#gl { display:block; width:100vw; height:100vh; }
+  #hud { position:fixed; top:18px; left:20px; display:flex; align-items:center; gap:14px; z-index:5; }
+  #hud h1 { margin:0; font:400 24px var(--serif); }
+  #home { all:unset; cursor:pointer; color:var(--ink); border-radius:6px; padding:2px 4px; }
+  #home:hover { color:var(--acc); }
+  #home:focus-visible { outline:2px solid var(--acc); outline-offset:3px; }
+  #add { color:var(--acc); text-decoration:none; font:600 13px var(--sans); border:1px solid rgba(217,163,91,.45); padding:7px 12px; border-radius:999px; background:rgba(20,14,9,.6); }
+  #set { color:var(--ink); text-decoration:none; font:600 13px var(--sans); border:1px solid rgba(239,227,207,.32); padding:7px 12px; border-radius:999px; background:rgba(20,14,9,.6); }
+  #set:hover { border-color:var(--ink); background:rgba(239,227,207,.1); }
+  #add:hover { background:rgba(217,163,91,.15); }
+  #back { display:none; border:1px solid rgba(243,230,207,.25); background:rgba(20,14,9,.6); color:var(--ink); font:500 13px var(--sans); padding:7px 12px; border-radius:999px; cursor:pointer; backdrop-filter:blur(6px); }
+  #back:hover { border-color:var(--acc); }
+  #crumbs { font:500 13px var(--sans); color:var(--fade); }
+  #crumbs b { color:var(--ink); font-weight:600; }
+  #otd { position:fixed; top:16px; right:20px; z-index:5; border:1px solid rgba(217,163,91,.5); background:rgba(20,14,9,.6); color:var(--acc); font:600 13px var(--sans); padding:8px 14px; border-radius:999px; cursor:pointer; backdrop-filter:blur(6px); }
+  #otd:hover { background:rgba(217,163,91,.15); }
+  #hint { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); font:500 13px var(--sans); color:var(--fade); z-index:5; pointer-events:none; transition:opacity .4s; text-align:center; padding:0 16px; }
+  #tip { position:fixed; pointer-events:none; z-index:6; background:rgba(20,14,9,.85); border:1px solid rgba(243,230,207,.18); padding:8px 12px; border-radius:10px; font:500 12px var(--sans); opacity:0; transition:opacity .15s; white-space:nowrap; }
+  #tip b { font:400 17px var(--serif); display:block; }
+  #lb { position:fixed; inset:0; background:rgba(8,5,3,.9); display:none; align-items:center; justify-content:center; flex-direction:column; gap:12px; z-index:10; cursor:zoom-out; }
+  #lb img { max-width:92vw; max-height:86vh; border-radius:4px; box-shadow:0 20px 60px rgba(0,0,0,.6); }
+  #lb div { font:600 22px Caveat,cursive; color:var(--ink); }
+  #ed { position:fixed; top:64px; right:max(16px, calc(50vw - 640px)); width:min(430px, calc(100vw - 32px)); max-height:calc(100vh - 88px); overflow:auto; z-index:11;
+    background:#f3ead8; color:#2f2418; border-radius:12px; padding:20px 22px 18px; box-shadow:0 30px 80px -20px rgba(0,0,0,.65); font:15px/1.5 var(--sans); }
+  #ed[hidden] { display:none; }
+  #ed header { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  #ed h2 { font:400 22px var(--serif); margin:0; flex:1; }
+  #ed .star, #ed .x { border:0; background:none; cursor:pointer; font-size:24px; line-height:1; color:#8a7560; width:36px; height:36px; border-radius:50%; }
+  #ed .star[aria-pressed="true"] { color:#b07d12; }
+  #ed .star:hover, #ed .x:hover { background:rgba(47,36,24,.08); }
+  #ed label, #ed .lab { display:block; font-weight:600; font-size:13px; color:#6b5a48; margin:12px 0 0; }
+  #ed input, #ed textarea { display:block; width:100%; margin-top:5px; background:#fffaf0; color:#2f2418; border:1px solid rgba(47,36,24,.16); border-radius:8px; padding:8px 10px; font:400 15px/1.5 var(--sans); resize:vertical; }
+  #ed #edText { font:400 18px/1.45 Caveat,cursive; }
+  #ed input:focus, #ed textarea:focus { outline:2px solid #8a3b22; outline-offset:1px; }
+  .spaces, .inside .row { display:flex; flex-wrap:wrap; gap:7px; margin-top:8px; }
+  .pill { display:inline-flex; align-items:center; gap:7px; border:1px solid rgba(47,36,24,.16); background:#fffaf0; color:#2f2418; border-radius:999px; padding:6px 12px; font:500 14px var(--sans); cursor:pointer; }
+  .pill i { width:10px; height:10px; border-radius:50%; border:2.5px solid var(--c); box-sizing:border-box; }
+  .pill[aria-pressed="true"] { border-color:#2f2418; box-shadow:inset 0 0 0 1px #2f2418; }
+  .pill[aria-pressed="true"] i { background:var(--c); }
+  .pill.focus { outline:2px dashed rgba(138,59,34,.45); outline-offset:2px; }
+  .pill.new { border-style:dashed; color:#6b5a48; background:none; }
+  .pill input { all:unset; width:120px; font:500 14px var(--sans); }
+  .inside { background:rgba(47,36,24,.06); border-radius:10px; padding:10px 12px; margin-top:10px; }
+  .inside[hidden] { display:none; }
+  .inside p { margin:0; font-size:13px; color:#6b5a48; }
+  #ed .pics { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; } #ed .pics img { height:64px; border-radius:4px; }
+  #ed footer { display:flex; align-items:center; gap:12px; margin-top:16px; flex-wrap:wrap; }
+  #ed .save { border:0; background:#2f2418; color:#f3ead8; border-radius:8px; padding:10px 18px; font:600 14px var(--sans); cursor:pointer; }
+  #ed .ghost { border:0; background:none; color:#8a3b22; font:600 14px var(--sans); border-bottom:1px solid currentColor; cursor:pointer; padding:0; }
+  #ed footer span { color:#8a7560; font-size:12px; margin-left:auto; }
+  #demo { border:1px solid rgba(239,227,207,.32); background:rgba(20,14,9,.6); color:var(--ink); font:600 13px var(--sans); padding:7px 12px; border-radius:999px; cursor:pointer; }
+  #demo:hover { border-color:var(--ink); background:rgba(239,227,207,.1); }
+  :root[data-theme="light"] #demo { background:rgba(48,34,24,.42); border-color:rgba(242,178,122,.45); }
+  body.demo #hud, body.demo #otd, body.demo #hint, body.demo #tip { opacity:0 !important; pointer-events:none; }
+  body.demo canvas#gl { cursor:none !important; }
+  #fade { position:fixed; inset:0; background:#000; z-index:15; pointer-events:none; opacity:0; transition:opacity .7s ease; }
+  #dcur { position:fixed; left:0; top:0; z-index:16; pointer-events:none; opacity:0; transition:opacity .3s; will-change:transform; }
+  #dcur svg { display:block; filter:drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
+  #dcur i { position:absolute; left:-17px; top:-17px; width:34px; height:34px; border-radius:50%; border:2px solid rgba(255,236,210,.95); opacity:0; }
+  #dcur i.go { animation:ripple .55s ease-out; }
+  @keyframes ripple { from { transform:scale(.3); opacity:1; } to { transform:scale(1.6); opacity:0; } }
+  #dpause { position:fixed; left:50%; bottom:28px; transform:translateX(-50%); z-index:17; display:none; gap:18px; align-items:center; background:rgba(20,14,9,.82); color:var(--ink); border:1px solid rgba(239,227,207,.25); border-radius:999px; padding:10px 20px; font:500 14px var(--sans); backdrop-filter:blur(6px); white-space:nowrap; }
+  #dpause.on { display:flex; }
+  #dpause b { font-weight:600; }
+  #dpause kbd { font:600 12px var(--sans); border:1px solid rgba(239,227,207,.35); border-radius:5px; padding:2px 6px; margin-right:5px; }
+  #load { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; font:italic 500 22px "Cormorant Garamond",serif; color:var(--fade); z-index:20; background:var(--bg); transition:opacity .6s; }
+</style>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script src="/theme.js"></script>
+</head>
+<body>
+<canvas id="gl"></canvas>
+<div id="hud"><h1><button id="home" title="Back to the shelves">Library</button></h1><a id="add" href="/add">+ Add pages</a><a id="set" href="/settings" aria-label="Settings">Settings</a><button id="demo" title="Plays a short tour for recording">▶ Demo</button><button id="back">‹ Back</button><div id="crumbs"></div></div>
+<button id="otd"></button>
+<div id="hint">Click a year to open it. Scroll down for your category books.</div>
+<div id="tip"></div>
+<div id="lb"><img alt=""><div></div></div>
+<aside id="ed" hidden aria-labelledby="edDate">
+  <header><h2 id="edDate"></h2><button id="edStar" class="star" aria-pressed="false" aria-label="Star this page">☆</button><button class="x" id="edX" aria-label="Close">×</button></header>
+  <label>Title<input id="edTitle" placeholder="A title, if you like"></label>
+  <label>What it says<textarea id="edText" rows="7"></textarea></label>
+  <label>Your note<textarea id="edNote" rows="3" placeholder="Why does this page matter? (optional)"></textarea></label>
+  <div class="lab" id="edCatsLab">Categories</div>
+  <div class="spaces" id="edSpaces"></div>
+  <div class="inside" id="edInside" hidden></div>
+  <div class="pics" id="edPics"></div>
+  <footer><button class="save" id="edSave">Save</button><button class="ghost" id="edPhoto">Add a photo</button><span>⌘ Enter saves</span></footer>
+</aside>
+<input type="file" id="attachIn" accept="image/*,.heic" multiple hidden>
+<div id="fade"></div>
+<div id="dpause" role="status"><b>Paused</b><span><kbd>Space</kbd>play</span><span><kbd>R</kbd>restart</span><span><kbd>Esc</kbd>exit</span></div>
+<div id="dcur"><i></i><svg width="26" height="30" viewBox="0 0 26 30"><path d="M3 2 L3 24 L9 18.5 L13 27.5 L17 25.8 L13 17 L21 17 Z" fill="#fff8ee" stroke="#1a120d" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+<div id="load">Dusting the shelf…</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+const $ = s => document.querySelector(s);
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MS = MONTHS.map(m => m.slice(0, 3));
+const WD = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+const TODAY = new Date(), todayStr = iso(TODAY), thisYear = TODAY.getFullYear();
+const nice = (ds, yr = true) => { const [y,m,d] = ds.split('-').map(Number); return `${WD[new Date(y,m-1,d).getDay()]}, ${d} ${MS[m-1]}${yr ? ' ' + y : ''}`; };
+const mk = (w, h) => Object.assign(document.createElement('canvas'), { width: w, height: h });
+
+// ---------- state ----------
+let cur = null, busy = false, hoverId = null, spots = { L: [], R: [] }, stack = [];
+let mode = 'shelf', reading = null, hoverBook = null;
+
+// ---------- data ----------
+const data = await fetch('/data.json').then(r => r.json());
+const pages = data.pages.filter(p => !p.dropped && p.date && (p.image || p.typed));
+const byDate = {};
+for (const p of pages) (byDate[p.date] ??= []).push(p);
+let ALLP = pages, CATS = data.categories || [];
+const byId = Object.fromEntries(pages.map(p => [p.id, p]));
+const YEARS = [];
+for (let y = thisYear - 5; y <= thisYear; y++) YEARS.push(y);
+const imgs = {};
+function preload(list) { for (const p of list) for (const src of [p.image && p.id, ...(p.attachments || [])].filter(Boolean)) { if (imgs[src]) continue; const im = new Image(); im.onload = () => { if (cur && !busy) redraw(); }; im.src = '/' + (src === p.id ? p.image : src); imgs[src] = im; } }
+preload(pages);
+
+const HANDF = (window.JR && JR.hand) || 'Caveat';
+await Promise.all([`600 60px "${HANDF}"`, '600 60px Caveat','700 60px "Cormorant Garamond"','600 60px "Cormorant Garamond"','italic 500 40px "Cormorant Garamond"'].map(f => document.fonts.load(f)));
+
+// ---------- renderer / scene ----------
+const renderer = new THREE.WebGLRenderer({ canvas: $('#gl'), antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.setSize(innerWidth, innerHeight);
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.05;
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+const MAXANI = renderer.capabilities.getMaxAnisotropy();
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x110c08);
+scene.fog = new THREE.Fog(0x110c08, 10, 22);
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+
+const camera = new THREE.PerspectiveCamera(40, innerWidth / innerHeight, 0.1, 60);
+const CAM = new THREE.Vector3(0, 1.55, 7.4), LOOK = new THREE.Vector3(0, 1.35, 0);
+camera.position.copy(CAM);
+
+scene.add(new THREE.HemisphereLight(0xffe6c4, 0x1a0f07, 0.55));
+const spot = new THREE.SpotLight(0xffd6a0, 260, 30, 0.62, 0.65, 1.6);
+spot.position.set(1.8, 7, 6.5); spot.target.position.set(0, 1.1, -0.6);
+spot.castShadow = true; spot.shadow.mapSize.set(2048, 2048); spot.shadow.bias = -0.0004; spot.shadow.normalBias = 0.02;
+scene.add(spot, spot.target);
+const rim = new THREE.PointLight(0xff9b52, 14, 9, 1.6); rim.position.set(-3.2, 3.6, 1.2); scene.add(rim);
+const fill = new THREE.PointLight(0xfff2de, 0, 12, 1.4); scene.add(fill);
+
+const tex = (c, srgb = true, rep) => { const t = new THREE.CanvasTexture(c); if (srgb) t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = MAXANI; if (rep) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(...rep); } return t; };
+
+// ---------- procedural textures ----------
+function grain(c, amt) { const x = c.getContext('2d'), d = x.getImageData(0, 0, c.width, c.height); for (let i = 0; i < d.data.length; i += 4) { const n = (Math.random() - .5) * amt; d.data[i] += n; d.data[i+1] += n; d.data[i+2] += n; } x.putImageData(d, 0, 0); return c; }
+function wood(base = '#4a2f1b') {
+  const c = mk(1024, 256), x = c.getContext('2d'); x.fillStyle = base; x.fillRect(0, 0, 1024, 256);
+  for (let i = 0; i < 180; i++) { const y = Math.random() * 256; x.strokeStyle = `rgba(${20+Math.random()*40},${10+Math.random()*20},4,${.12+Math.random()*.3})`; x.lineWidth = .5 + Math.random() * 2.5; x.beginPath(); x.moveTo(0, y); for (let X = 0; X <= 1024; X += 32) x.lineTo(X, y + Math.sin(X / 140 + i) * 3 + Math.random() * 1.2); x.stroke(); }
+  return grain(c, 14);
+}
+function leather(color, w = 256, h = 256) { const c = mk(w, h), x = c.getContext('2d'); x.fillStyle = color; x.fillRect(0, 0, w, h); return grain(c, 22); }
+const GOLD = (x, y0, y1) => { const g = x.createLinearGradient(0, y0, 0, y1); g.addColorStop(0, '#f1d48a'); g.addColorStop(.5, '#b98d3e'); g.addColorStop(1, '#e6c06e'); return g; };
+
+function spineArt(color, w, h, year) {
+  const col = leather(color, w, h), met = mk(w, h);
+  const draws = (x, ink) => {
+    const band = (y, hh) => { x.fillStyle = ink; x.fillRect(10, y, w - 20, hh); };
+    band(54, 5); band(66, 2); band(h - 59, 5); band(h - 68, 2);
+    if (year) {
+      band(150, 2); band(h - 150, 2);
+      x.save(); x.translate(w / 2, h / 2); x.rotate(Math.PI / 2); x.fillStyle = ink; x.textAlign = 'center'; x.textBaseline = 'middle';
+      let fs = Math.round(w * .62); x.font = `700 ${fs}px "Cormorant Garamond"`;
+      const tw = x.measureText(String(year)).width; if (tw > h - 340) { fs = Math.floor(fs * (h - 340) / tw); x.font = `700 ${fs}px "Cormorant Garamond"`; }
+      x.fillText(String(year), 0, 2); x.restore();
+      x.fillStyle = ink; x.font = `italic 500 ${Math.round(w * .2)}px "Cormorant Garamond"`; x.textAlign = 'center'; x.fillText('Journal', w / 2, 118); x.fillText('✦', w / 2, h - 100);
+    }
+  };
+  const cx = col.getContext('2d');
+  // raised ribs
+  for (const y of [110, h - 110]) { const g = cx.createLinearGradient(0, y - 10, 0, y + 10); g.addColorStop(0, 'rgba(0,0,0,.25)'); g.addColorStop(.5, 'rgba(255,255,255,.12)'); g.addColorStop(1, 'rgba(0,0,0,.25)'); cx.fillStyle = g; cx.fillRect(0, y - 10, w, 20); }
+  const sh = cx.createLinearGradient(0, 0, w, 0); sh.addColorStop(0, 'rgba(0,0,0,.35)'); sh.addColorStop(.45, 'rgba(255,255,255,.06)'); sh.addColorStop(1, 'rgba(0,0,0,.4)'); cx.fillStyle = sh; cx.fillRect(0, 0, w, h);
+  draws(cx, GOLD(cx, 0, h));
+  const mx = met.getContext('2d'); mx.fillStyle = '#000'; mx.fillRect(0, 0, w, h); draws(mx, '#fff');
+  return { col, met };
+}
+function coverArt(color, year) {
+  const w = 700, h = 1000, col = leather(color, w, h), met = mk(w, h);
+  const draws = (x, ink) => {
+    x.strokeStyle = ink; x.lineWidth = 6; x.strokeRect(38, 38, w - 76, h - 76); x.lineWidth = 2; x.strokeRect(56, 56, w - 112, h - 112);
+    x.fillStyle = ink; x.textAlign = 'center'; x.textBaseline = 'alphabetic';
+    let fs = 170; x.font = `700 ${fs}px "Cormorant Garamond"`; while (x.measureText(String(year)).width > w - 150 && fs > 40) { fs -= 6; x.font = `700 ${fs}px "Cormorant Garamond"`; }
+    x.fillText(String(year), w / 2, 470);
+    x.font = 'italic 500 64px "Cormorant Garamond"'; x.fillText('Journal', w / 2, 560);
+    x.fillRect(w / 2 - 90, 610, 180, 3); x.font = '500 40px "Cormorant Garamond"'; x.fillText('✦', w / 2, 690);
+  };
+  const cx = col.getContext('2d'); const v = cx.createRadialGradient(w/2, h/2, 100, w/2, h/2, 700); v.addColorStop(0, 'rgba(255,255,255,.05)'); v.addColorStop(1, 'rgba(0,0,0,.35)'); cx.fillStyle = v; cx.fillRect(0, 0, w, h);
+  draws(cx, GOLD(cx, 300, 700));
+  const mx = met.getContext('2d'); mx.fillStyle = '#000'; mx.fillRect(0, 0, w, h); draws(mx, '#fff');
+  return { col, met };
+}
+function pageEdges() { const c = mk(64, 512), x = c.getContext('2d'); x.fillStyle = '#efe4cb'; x.fillRect(0, 0, 64, 512); for (let i = 0; i < 512; i += 2) { x.fillStyle = `rgba(120,95,60,${Math.random() * .18})`; x.fillRect(0, i, 64, 1); } return c; }
+const EDGE = tex(pageEdges());
+
+// ---------- bookcase ----------
+const woodMat = new THREE.MeshStandardMaterial({ map: tex(wood(), true, [2, 1]), roughness: .75, metalness: 0, envMapIntensity: .3 });
+const backMat = new THREE.MeshStandardMaterial({ map: tex(wood('#2c1b10'), true, [1, 3]), roughness: .9, envMapIntensity: .2 });
+const box = (w, h, d, m, x, y, z, cast = true) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); o.castShadow = cast; o.receiveShadow = true; scene.add(o); return o; };
+box(7.9, 10, .1, backMat, 0, .6, -2.05, false);
+for (const y of [-2.66, .14, 3.02, 5.9]) box(7.9, .14, 2.15, woodMat, 0, y, -1, true);
+for (const x of [-3.98, 3.98]) box(.16, 10, 2.25, woodMat, x, .6, -.98, true);
+const wall = new THREE.Mesh(new THREE.PlaneGeometry(40, 20), new THREE.MeshStandardMaterial({ color: 0x1b120b, roughness: 1 })); wall.position.set(0, 2, -2.2); wall.receiveShadow = true; scene.add(wall);
+
+// ---------- books ----------
+const SHELF = [-2.59, .21, 3.09];
+const PAL = ['#2f4a3a', '#6b2a2a', '#233452', '#7a5430', '#4a2140', '#2c3a3f', '#5b4a2a', '#3d2a1e', '#1f3b36', '#6a3b22'];
+const YCOL = ['#28433a', '#5e2424', '#20304d', '#71492a', '#4f1f3b', '#2a2d33'];
+
+function buildBook({ W, H, T, color, year }) {
+  const book = new THREE.Group();
+  const lm = new THREE.MeshStandardMaterial({ map: tex(leather(color)), roughness: .62, envMapIntensity: .5 });
+  const add = (parent, geo, mat, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; parent.add(m); return m; };
+  add(book, new THREE.BoxGeometry(W, H, .03), lm, W / 2, 0, -T / 2 + .015);                          // back cover
+  add(book, new THREE.BoxGeometry(W - .05, H - .07, T - .03), new THREE.MeshStandardMaterial({ map: EDGE, roughness: .95 }), .005 + (W - .05) / 2, 0, .015); // pages
+  add(book, new THREE.BoxGeometry(.035, H, T + .03), lm, -.0175, 0, .015);                         // spine
+  const sa = spineArt(color, 160, Math.round(160 * H / (T + .03)), year);
+  const sp = add(book, new THREE.PlaneGeometry(T + .03, H), new THREE.MeshStandardMaterial({ map: tex(sa.col), metalnessMap: tex(sa.met, false), metalness: 1, roughness: .45, envMapIntensity: 1.3 }), -.0355, 0, .015);
+  sp.rotation.y = -Math.PI / 2;
+  const cover = new THREE.Group(); cover.position.set(0, 0, T / 2); book.add(cover);
+  add(cover, new THREE.BoxGeometry(W, H, .03), lm, W / 2, 0, .015);
+  const b = { book, cover, W, H, T, year };
+  if (year) {
+    const ca = coverArt(color, year);
+    add(cover, new THREE.PlaneGeometry(W - .02, H - .02), new THREE.MeshStandardMaterial({ map: tex(ca.col), metalnessMap: tex(ca.met, false), metalness: 1, roughness: .45, envMapIntensity: 1.3 }), W / 2, 0, .0305);
+    const pw = W - .09, ph = H - .12; b.pw = pw;
+    b.L = add(cover, new THREE.PlaneGeometry(pw, ph), pageMat(Lt), pw / 2 + .03, 0, -.003); b.L.rotation.y = Math.PI; b.L.castShadow = false;
+    b.R = add(book, new THREE.PlaneGeometry(pw, ph), pageMat(Rt), pw / 2 + .03, 0, T / 2 + .003); b.R.castShadow = false;
+    const geo = new THREE.PlaneGeometry(pw, ph, 32, 1); geo.translate(pw / 2 + .03, 0, 0);
+    const pivot = new THREE.Group(); pivot.position.set(0, 0, T / 2 + .008); pivot.visible = false; book.add(pivot);
+    pivot.add(new THREE.Mesh(geo, pageMat(Ft)), new THREE.Mesh(geo, Object.assign(pageMat(Bt), { side: THREE.BackSide })));
+    b.sheet = { pivot, geo, base: geo.attributes.position.array.slice(), span: pw + .03 };
+  }
+  return b;
+}
+function place(b, x, shelfY, z = 0, lean = 0) {
+  const holder = new THREE.Group(); holder.position.set(x, shelfY + b.H / 2, z); scene.add(holder);
+  b.restQ = new THREE.Quaternion().setFromEuler(new THREE.Euler(0, Math.PI / 2, lean));
+  b.book.quaternion.copy(b.restQ); holder.add(b.book); b.holder = holder; return b;
+}
+const rnd = (a, b) => a + Math.random() * (b - a);
+function fillers(x0, x1, shelfY) {
+  let x = x0;
+  while (x < x1) { const T = rnd(.18, .42), H = rnd(1.75, 2.45); if (x + T + .03 > x1) break; place(buildBook({ W: rnd(1.3, 1.7), H, T, color: PAL[Math.floor(Math.random() * PAL.length)] }), x + .0355, shelfY, rnd(-.12, 0)); x += T + .05 + rnd(0, .03); }
+}
+function flatStack(x, shelfY, n) {
+  let y = shelfY;
+  for (let i = 0; i < n; i++) { const T = rnd(.16, .26), W = rnd(1.4, 1.65), H = rnd(1.8, 2.1); const b = buildBook({ W, H, T, color: PAL[(i * 3 + 2) % PAL.length] }); b.book.rotation.set(-Math.PI / 2, 0, Math.PI / 2 + rnd(-.08, .08)); b.book.position.set(x, y + T / 2 + .015, -W / 2 + .05); scene.add(b.book); y += T + .03; }
+}
+
+// page textures (shared by whichever book is open)
+const CW = 1000, CH = 1410;
+const [Lc, Rc, Fc, Bc] = [0, 0, 0, 0].map(() => mk(CW, CH));
+const [Lt, Rt, Ft, Bt] = [Lc, Rc, Fc, Bc].map(c => tex(c));
+Bt.wrapS = THREE.RepeatWrapping; Bt.repeat.x = -1; Bt.offset.x = 1;
+function pageMat(t) { return new THREE.MeshStandardMaterial({ map: t, roughness: .95, emissive: 0xffffff, emissiveMap: t, emissiveIntensity: .06, envMapIntensity: .2 }); }
+
+const books = {};
+const yearX0 = -((YEARS.length) * .5) / 2;
+YEARS.forEach((y, i) => { books[y] = place(buildBook({ W: 1.7, H: 2.4, T: .42, color: YCOL[i % YCOL.length], year: y }), yearX0 + i * .5 + .0355, SHELF[1]); });
+fillers(-3.86, -2.5, SHELF[1]);
+flatStack(2.25, SHELF[1], 4);
+fillers(3.0, 3.86, SHELF[1]);
+fillers(-3.86, 3.86, SHELF[2]);
+const ROWH = 2.8, PER = 12;
+const catList = [{ id: 'starred', name: 'Starred' }, ...CATS.filter(c => !c.parent)];
+const catRows = Math.ceil(catList.length / PER);
+for (let r = 1; r < catRows; r++) box(7.9, .14, 2.15, woodMat, 0, -2.66 - r * ROWH, -1, true);
+if (catRows > 1) { const ext = (catRows - 1) * ROWH; for (const x of [-3.98, 3.98]) box(.16, ext, 2.25, woodMat, x, -4.4 - ext / 2, -.98, true); box(7.9, ext, .1, backMat, 0, -4.4 - ext / 2, -2.05, false); }
+const CCOL = ['#7a5a1a', '#3b5a4a', '#6a2f2f', '#2b3e5e', '#7c5a2a', '#5a2a4a', '#2f4f4f', '#6b4a2a', '#3a3a5a'];
+for (let r = 0; r < catRows; r++) {
+  const row = catList.slice(r * PER, r * PER + PER), x0 = -(row.length * .5) / 2;
+  row.forEach((c, j) => { const b = place(buildBook({ W: 1.7, H: 2.3, T: .42, color: CCOL[(r * PER + j) % CCOL.length], year: c.name }), x0 + j * .5 + .0355, SHELF[0] - r * ROWH);
+    b.cat = c; b.year = undefined; b.key = 'cat:' + c.id; books[b.key] = b; });
+  fillers(-3.86, x0 - .12, SHELF[0] - r * ROWH); fillers(x0 + row.length * .5 + .08, 3.86, SHELF[0] - r * ROWH);
+}
+let camRow = 0;
+const maxRow = catRows;
+for (const [k, b] of Object.entries(books)) b.key ??= +k;
+const yearBooks = Object.values(books);
+
+// ---------- tweens ----------
+const tweens = new Set();
+const ease = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const tween = (ms, fn) => new Promise(r => tweens.add({ s: performance.now(), ms, fn, r }));
+
+// ---------- page drawing ----------
+const INK = '#2f2418', FADE = 'rgba(47,36,24,.42)', ACC = '#8a3b22';
+const SERIF = s => `600 ${s}px "Cormorant Garamond"`, ITAL = s => `italic 500 ${s}px "Cormorant Garamond"`, HAND = s => `600 ${s}px "${HANDF}"`;
+function T(c, txt, x, y, font, color = INK, align = 'left') { c.font = font; c.fillStyle = color; c.textAlign = align; c.textBaseline = 'alphabetic'; c.fillText(txt, x, y); }
+const noise = (() => { const c = mk(256, 256), x = c.getContext('2d'), d = x.createImageData(256, 256); for (let i = 0; i < d.data.length; i += 4) { const v = Math.random() * 255; d.data[i] = d.data[i+1] = d.data[i+2] = v; d.data[i+3] = 16; } x.putImageData(d, 0, 0); return c; })();
+function paper(c, side) {
+  c.setTransform(1, 0, 0, 1, 0, 0); c.fillStyle = '#f2e8d2'; c.fillRect(0, 0, CW, CH);
+  c.fillStyle = c.createPattern(noise, 'repeat'); c.fillRect(0, 0, CW, CH);
+  const g = side === 'L' ? c.createLinearGradient(CW, 0, CW - 150, 0) : c.createLinearGradient(0, 0, 150, 0);
+  g.addColorStop(0, 'rgba(70,45,20,.32)'); g.addColorStop(1, 'rgba(70,45,20,0)'); c.fillStyle = g; c.fillRect(0, 0, CW, CH);
+  const o = side === 'L' ? c.createLinearGradient(0, 0, 50, 0) : c.createLinearGradient(CW, 0, CW - 50, 0);
+  o.addColorStop(0, 'rgba(90,60,30,.14)'); o.addColorStop(1, 'rgba(90,60,30,0)'); c.fillStyle = o; c.fillRect(0, 0, CW, CH);
+}
+function hl(c, x, y, w, h, on) { if (!on) return; c.fillStyle = 'rgba(138,59,34,.08)'; c.beginPath(); c.roundRect(x, y, w, h, 18); c.fill(); }
+function photo(c, im, cx, cy, maxW, maxH, rot, hov) {
+  const ok = im && im.complete && im.naturalWidth, ar = ok ? im.naturalWidth / im.naturalHeight : .86;
+  let w = maxW, h = w / ar; if (h > maxH) { h = maxH; w = h * ar; }
+  const b = Math.max(5, w * .028);
+  c.save(); c.translate(cx, cy); c.rotate(rot);
+  c.shadowColor = 'rgba(40,25,10,.38)'; c.shadowBlur = hov ? 30 : 14; c.shadowOffsetY = hov ? 12 : 5;
+  c.fillStyle = '#fffdf6'; c.fillRect(-w/2 - b, -h/2 - b, w + 2*b, h + 2*b); c.shadowColor = 'transparent';
+  if (ok) c.drawImage(im, -w/2, -h/2, w, h); else { c.fillStyle = '#e4d9c2'; c.fillRect(-w/2, -h/2, w, h); }
+  if (hov) { c.strokeStyle = ACC; c.lineWidth = 4; c.strokeRect(-w/2 - b, -h/2 - b, w + 2*b, h + 2*b); }
+  c.restore();
+}
+const folio = (c, side, txt) => T(c, txt, side === 'L' ? 80 : CW - 80, CH - 50, ITAL(30), FADE, side === 'L' ? 'left' : 'right');
+
+function render(canvas, side, fn, collect) {
+  const c = canvas.getContext('2d'), list = []; let i = 0;
+  paper(c, side);
+  fn(c, (x, y, w, h, go) => { const id = side + (i++); list.push({ x, y, w, h, go, id }); return collect && hoverId === id; }, side);
+  if (collect) spots[side] = list;
+}
+function redraw() { render(Lc, 'L', cur.L, true); render(Rc, 'R', cur.R, true); Lt.needsUpdate = Rt.needsUpdate = true; }
+
+const datesOf = y => Object.keys(byDate).filter(d => d.startsWith(y + '-')).sort();
+
+function yearSpread(y) {
+  const ds = datesOf(y), n = ds.reduce((a, d) => a + byDate[d].length, 0);
+  const perM = Array(12).fill(0), daysM = Array(12).fill(0);
+  ds.forEach(d => { const m = +d.slice(5, 7) - 1; perM[m] += byDate[d].length; daysM[m]++; });
+  return { label: String(y), y,
+    L: (c, spot, side) => {
+      T(c, String(y), CW / 2, 330, SERIF(230), INK, 'center');
+      T(c, 'a year, in my own handwriting', CW / 2, 410, ITAL(46), FADE, 'center');
+      c.fillStyle = FADE; c.fillRect(CW / 2 - 70, 450, 140, 2);
+      if (n) { T(c, `${n} pages · ${ds.length} days written`, CW / 2, 560, HAND(60), INK, 'center'); T(c, `${nice(ds[0], false)} to ${nice(ds.at(-1), false)}`, CW / 2, 630, HAND(48), FADE, 'center'); }
+      else { T(c, 'No pages yet', CW / 2, 560, HAND(60), INK, 'center'); T(c, 'Flip through this year on video and it fills in.', CW / 2, 630, HAND(42), FADE, 'center'); }
+      const max = Math.max(1, ...perM), base = 1130;
+      for (let m = 0; m < 12; m++) { const x = 115 + m * 66, h = Math.max(5, perM[m] / max * 300); c.fillStyle = perM[m] ? ACC : 'rgba(47,36,24,.13)'; c.beginPath(); c.roundRect(x, base - h, 38, h, 8); c.fill(); T(c, MS[m][0], x + 19, base + 52, HAND(40), FADE, 'center'); }
+      T(c, 'pages per month', CW / 2, base + 120, ITAL(32), FADE, 'center');
+      folio(c, side, 'i');
+    },
+    R: (c, spot, side) => {
+      T(c, 'Months', 85, 165, SERIF(90));
+      for (let m = 0; m < 12; m++) {
+        const tx = 70 + (m % 3) * 290, ty = 215 + Math.floor(m / 3) * 285, w = 270, h = 265;
+        const hov = spot(tx, ty, w, h, () => push(monthSpread(y, m)));
+        hl(c, tx, ty, w, h, hov);
+        c.strokeStyle = hov ? ACC : 'rgba(47,36,24,.22)'; c.lineWidth = hov ? 3 : 2; c.beginPath(); c.roundRect(tx + 6, ty + 6, w - 12, h - 12, 16); c.stroke();
+        T(c, MONTHS[m], tx + 30, ty + 82, SERIF(52), daysM[m] ? INK : FADE);
+        T(c, daysM[m] ? `${daysM[m]} day${daysM[m] > 1 ? 's' : ''}` : 'empty', tx + 30, ty + 140, HAND(46), daysM[m] ? ACC : FADE);
+        const dim = new Date(y, m + 1, 0).getDate();
+        for (let d = 1; d <= dim; d++) { const has = byDate[`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`]; c.fillStyle = has ? ACC : 'rgba(47,36,24,.14)'; c.beginPath(); c.arc(tx + 34 + ((d - 1) % 8) * 26, ty + 180 + Math.floor((d - 1) / 8) * 20, has ? 6.5 : 4, 0, 7); c.fill(); }
+      }
+      folio(c, side, 'ii');
+    } };
+}
+
+function monthSpread(y, m) {
+  const pad = n => String(n).padStart(2, '0'), dim = new Date(y, m + 1, 0).getDate(), first = (new Date(y, m, 1).getDay() + 6) % 7;
+  const ds = datesOf(y).filter(d => +d.slice(5, 7) === m + 1);
+  return arrows({ prev: () => m > 0 ? monthSpread(y, m - 1) : null, next: () => m < 11 ? monthSpread(y, m + 1) : null, label: MONTHS[m],
+    L: (c, spot, side) => {
+      T(c, MONTHS[m], 85, 200, SERIF(120)); T(c, String(y), CW - 85, 200, HAND(64), FADE, 'right');
+      const x0 = 85, y0 = 360, cw = 118;
+      'MTWTFSS'.split('').forEach((d, i) => T(c, d, x0 + i * cw + cw / 2, 320, SERIF(36), FADE, 'center'));
+      for (let d = 1; d <= dim; d++) {
+        const k = first + d - 1, cx = x0 + (k % 7) * cw, cy = y0 + Math.floor(k / 7) * cw, key = `${y}-${pad(m+1)}-${pad(d)}`, has = byDate[key];
+        const hov = spot(cx, cy, cw, cw, () => push(daySpread(y, key, 0)));
+        hl(c, cx + 4, cy + 4, cw - 8, cw - 8, hov);
+        if (has) { c.strokeStyle = ACC; c.lineWidth = 4; c.beginPath(); c.ellipse(cx + cw / 2, cy + cw / 2 - 4, 44, 38, -.25 + (d % 3) * .1, 0.3, Math.PI * 2 + .15); c.stroke(); }
+        if (key === todayStr) { c.fillStyle = ACC; c.fillRect(cx + cw / 2 - 22, cy + cw / 2 + 30, 44, 4); }
+        T(c, String(d), cx + cw / 2, cy + cw / 2 + 14, HAND(50), has ? INK : FADE, 'center');
+      }
+      T(c, 'circled days have pages · any day shows other years', CW / 2, CH - 130, ITAL(30), FADE, 'center');
+      folio(c, side, MS[m].toLowerCase());
+    },
+    R: (c, spot, side) => {
+      T(c, 'Written this month', 85, 165, SERIF(72));
+      if (!ds.length) { T(c, 'Nothing written this month.', 85, 300, HAND(56), FADE); T(c, 'Open any day on the calendar to see', 85, 380, HAND(44), FADE); T(c, 'what you wrote on it in other years.', 85, 435, HAND(44), FADE); }
+      ds.slice(0, 8).forEach((d, i) => {
+        const ry = 215 + i * 145, ps = byDate[d], lead = ps.find(p => p.image || p.attachments?.length) || ps.find(p => p.type === 'journal') || ps[0];
+        const hov = spot(70, ry, CW - 140, 135, () => push(daySpread(y, d, 0)));
+        hl(c, 70, ry, CW - 140, 135, hov);
+        thumb(c, lead, 140, ry + 67, 90, 112, (i % 2 ? .03 : -.03), false);
+        T(c, nice(d, false), 230, ry + 58, HAND(52), hov ? ACC : INK);
+        T(c, lineOf(byId[lead.id] || lead).slice(0, 34), 230, ry + 105, ITAL(36), FADE);
+        T(c, `${ps.length} page${ps.length > 1 ? 's' : ''}`, CW - 95, ry + 58, HAND(40), FADE, 'right');
+      });
+      folio(c, side, String(y));
+    } });
+}
+
+function thumb(c, p, cx, cy, w, h, rot, hov) {
+  const src = p.image ? p.id : p.attachments?.[0];
+  if (src) return photo(c, imgs[src], cx, cy, w, h, rot, hov);
+  c.save(); c.translate(cx, cy); c.rotate(rot); c.shadowColor = 'rgba(40,25,10,.3)'; c.shadowBlur = 10; c.shadowOffsetY = 4;
+  c.fillStyle = '#fbf6ea'; c.fillRect(-w / 2, -h / 2, w, h); c.shadowColor = 'transparent';
+  c.strokeStyle = 'rgba(70,90,140,.25)'; c.lineWidth = 1.5; for (let k = 1; k < 5; k++) { c.beginPath(); c.moveTo(-w / 2 + 8, -h / 2 + k * h / 5); c.lineTo(w / 2 - 8, -h / 2 + k * h / 5); c.stroke(); }
+  c.fillStyle = ACC; c.fillRect(-w / 2 + 8, -h / 2 + h / 5 - 8, w * .45, 4); c.restore();
+}
+const lineOf = p => p.source === 'obsidian' || !p.title ? ((p.text || '').split('\n').find(l => l.trim() && !/^\d{1,2}:\d{2}$/.test(l.trim())) || p.title || '') : p.title;
+
+function wrapLines(c, text, maxW, max) {
+  const out = []; let line = '';
+  for (const w of text.split(' ')) {
+    const t = line ? line + ' ' + w : w;
+    if (c.measureText(t).width > maxW && line) { out.push(line); line = w; if (out.length === max) break; } else line = t;
+  }
+  if (out.length < max && line) out.push(line);
+  else if (out.length === max) out[max - 1] = out[max - 1].replace(/\s*\S*$/, '') + '…';
+  return out;
+}
+
+function writeText(c, p) {
+  c.strokeStyle = 'rgba(70,90,140,.13)'; c.lineWidth = 2;
+  for (let ly = 300; ly < CH - 150; ly += 62) { c.beginPath(); c.moveTo(85, ly); c.lineTo(CW - 85, ly); c.stroke(); }
+  let ly = 284;
+  if (p.title) { T(c, p.title, 85, ly - 10, HAND(60), ACC); ly += 72; }
+  const att = p.attachments || [];
+  const stop = att.length ? CH - 520 : CH - 170;
+  if (att.length) att.slice(0, 3).forEach((a, k, arr) => photo(c, imgs[a], CW / 2 + (k - (arr.length - 1) / 2) * 270, CH - 330, 230, 300, (k % 2 ? .03 : -.025), false));
+  c.font = HAND(46); c.fillStyle = INK; c.textAlign = 'left';
+  for (const para of p.text.split('\n')) {
+    let line = '';
+    for (const w of para.split(' ')) {
+      const t = line ? line + ' ' + w : w;
+      if (c.measureText(t).width > CW - 180 && line) { c.fillText(line, 90, ly); ly += 62; line = w; } else line = t;
+      if (ly > stop) { c.fillText('…', 90, ly); return; }
+    }
+    c.fillText(line, 90, ly); ly += 62;
+  }
+}
+
+function arrows(sp) { // ‹ › at the foot of the pages whenever there is somewhere to turn to
+  const L = sp.L, R = sp.R;
+  sp.L = (c, spot, side) => { L(c, spot, side); if (sp.prev && sp.prev()) { const h = spot(40, CH - 120, 260, 90, () => go(-1)); T(c, '‹ back a page', 85, CH - 50, HAND(42), h ? ACC : FADE); } };
+  sp.R = (c, spot, side) => { R(c, spot, side); if (sp.next && sp.next()) { const h = spot(CW - 300, CH - 120, 260, 90, () => go(1)); T(c, 'next page ›', CW - 85, CH - 50, HAND(42), h ? ACC : FADE, 'right'); } };
+  return sp;
+}
+const yearsAgo = (from, y) => { const a = from - y; return a > 0 ? `${a} year${a > 1 ? 's' : ''} ago` : a < 0 ? `${-a} year${a < -1 ? 's' : ''} later` : 'this year'; };
+
+function photoPage(c, spot, p0, ds, count) {
+  const p = byId[p0.id] || p0;
+  T(c, nice(ds), 85, 140, HAND(62)); T(c, p.type === 'notes' ? 'notes' : 'journal', CW - 85, 140, ITAL(34), FADE, 'right');
+  if (p.typed) writeText(c, p);
+  else { const hov = spot(70, 180, CW - 140, 1110, () => openLB(p, ds)); photo(c, imgs[p.id], CW / 2, 735, 790, 1040, ((p.id.charCodeAt(2) % 5) - 2) * .006, hov); }
+  T(c, p.demo ? 'demo entry' : p.source === 'obsidian' ? 'from your Daily Log in Obsidian' : p.typed ? 'typed entry' : p.kind === 'written' ? 'date written on the page' : 'date worked out from the pages around it', 85, CH - 110, ITAL(30), FADE);
+  if (count) T(c, count, CW - 85, CH - 110, HAND(40), FADE, 'right');
+}
+
+function textPage(c, spot, p0, o = {}) {
+  const p = byId[p0.id] || p0;
+  T(c, o.heading || (p.typed ? 'About this entry' : 'What it says'), 85, 150, SERIF(o.heading ? 60 : 64));
+  const sh = spot(CW - 180, 80, 110, 100, () => setMeta(p, { star: !p.star }));
+  T(c, p.star ? '★' : '☆', CW - 90, 156, SERIF(70), p.star ? '#b07d12' : sh ? ACC : FADE, 'right');
+  const att = p.typed ? [] : (p.attachments || []);
+  const bottom = CH - 250 - (p.note ? 150 : 0) - (att.length ? 230 : 0);
+  let y = o.open ? 280 : 235;
+  if (!p.typed) {
+    if (p.title) { T(c, p.title, 85, y, HAND(48), ACC); y += 60; }
+    c.font = HAND(33); c.fillStyle = INK; c.textAlign = 'left';
+    const lines = (p.text || '').split('\n').filter(l => l.trim()).flatMap(par => wrapLines(c, par.trim(), CW - 170, 99));
+    for (const l of lines) { if (y > bottom) { c.fillText('…', 85, y); break; } c.font = HAND(33); c.fillStyle = INK; c.fillText(l, 85, y); y += 42; }
+    if (!lines.length) T(c, 'No words read from this page yet.', 85, y, ITAL(32), FADE);
+  } else if (!p.note) T(c, 'Add a note, a category or a photo below, or edit the entry.', 85, y, ITAL(30), FADE);
+  if (att.length) att.slice(0, 4).forEach((a, k) => photo(c, imgs[a], 165 + k * 225, CH - 250 - (p.note ? 150 : 0) - 105, 190, 190, k % 2 ? .03 : -.03, false));
+  if (p.note) {
+    const ny = CH - 380; c.fillStyle = 'rgba(176,125,18,.1)'; c.beginPath(); c.roundRect(70, ny, CW - 140, 128, 14); c.fill();
+    T(c, 'Your note', 95, ny + 38, ITAL(28), FADE);
+    c.font = HAND(32); c.fillStyle = INK; c.textAlign = 'left'; wrapLines(c, p.note.replace(/\s+/g, ' '), CW - 200, 2).forEach((l, k) => c.fillText(l, 95, ny + 80 + k * 36));
+  }
+  const names = (p.cats || []).map(id => CATS.find(x => x.id === id)?.name).filter(Boolean);
+  T(c, names.length ? `Filed in ${names.join(', ')}` : 'Not filed in a category yet', 85, CH - 200, ITAL(30), FADE);
+  [['+ Photo', 85, 150, () => attachTo(p)], ['+ Note', 260, 140, () => openEditor(p, 'note')], ['Categories', 420, 190, () => openEditor(p, 'cats')], ['Edit', 640, 100, () => openEditor(p, 'text')]]
+    .forEach(([label, x, w, fn]) => { const h = spot(x - 15, CH - 175, w, 60, fn); T(c, label, x, CH - 132, HAND(38), h ? ACC : FADE); });
+  if (o.open) { const oh = spot(CW - 420, 175, 350, 60, o.open); T(c, o.openLabel, CW - 85, 222, HAND(36), oh ? ACC : FADE, 'right'); }
+}
+
+function daySummary(c, spot, y, ds, ps) {
+  T(c, nice(ds), CW / 2, 300, HAND(76), INK, 'center');
+  if (!ps.length) { T(c, 'Nothing written on this day.', CW / 2, 400, SERIF(52), FADE, 'center'); T(c, 'See what you wrote on it in other years, opposite.', CW / 2, 480, HAND(40), FADE, 'center'); return; }
+  T(c, `${ps.length} page${ps.length > 1 ? 's' : ''} on this day`, CW / 2, 380, ITAL(40), FADE, 'center');
+  ps.slice(0, 7).forEach((p0, k) => { const p = byId[p0.id] || p0, ry = 460 + k * 110, h = spot(80, ry - 60, CW - 160, 100, () => go(-1, daySpread(y, ds, k)));
+    hl(c, 80, ry - 60, CW - 160, 100, h); T(c, `${p.star ? '★ ' : ''}${(p.title || p.text || 'Page').replace(/\s+/g, ' ').slice(0, 34)}`, 110, ry, HAND(42), h ? ACC : INK); });
+}
+
+function otdPage(c, spot, y, ds) {
+  const md = ds.slice(5), [mm, dd] = md.split('-').map(Number);
+  T(c, 'On this day', 85, 165, SERIF(88)); T(c, `${dd} ${MONTHS[mm - 1]}`, CW - 85, 165, HAND(58), ACC, 'right');
+  YEARS.filter(yy => yy !== y).sort((a, b) => b - a).forEach((yy, r) => {
+    const ry = 230 + r * 215, key = `${yy}-${md}`, has = byDate[key] || [];
+    const hov = has.length ? spot(70, ry, CW - 140, 200, () => push(visitSpread(yy, key, 0, y))) : false;
+    hl(c, 70, ry, CW - 140, 200, hov);
+    T(c, String(yy), 95, ry + 95, SERIF(70), has.length ? INK : FADE);
+    T(c, yearsAgo(y, yy), 95, ry + 145, HAND(38), FADE);
+    if (has.length) {
+      const pic = has.find(p => p.image) || has.find(p => p.attachments?.length);
+      let tx = 330;
+      if (pic) { photo(c, imgs[pic.image ? pic.id : pic.attachments[0]], 372, ry + 100, 84, 150, -.03, hov); tx = 440; }
+      const snip = has.map(p => [p.title, p.text].filter(Boolean).join('. ')).join(' ').replace(/\s+/g, ' ');
+      c.font = HAND(31); c.fillStyle = INK; c.textAlign = 'left';
+      wrapLines(c, snip, CW - 95 - tx, 4).forEach((l, k) => c.fillText(l, tx, ry + 52 + k * 37));
+      if (has.length > 1) T(c, `${has.length} pages`, CW - 95, ry + 190, ITAL(26), FADE, 'right');
+    } else T(c, 'nothing written', 330, ry + 110, HAND(44), 'rgba(47,36,24,.28)');
+    c.fillStyle = 'rgba(47,36,24,.1)'; c.fillRect(85, ry + 205, CW - 170, 2);
+  });
+}
+
+// a day: each page as photo | what it says, then the day with other years
+function daySpread(y, ds, i = 0) {
+  const ps = byDate[ds] || [], n = ps.length, dates = datesOf(y);
+  const sp = i < n
+    ? { label: nice(ds, false) + (n > 1 ? ` (${i + 1} of ${n})` : ''), L: (c, spot) => photoPage(c, spot, ps[i], ds, n > 1 ? `${i + 1} / ${n}` : ''), R: (c, spot) => textPage(c, spot, ps[i]) }
+    : { label: `${nice(ds, false)}, other years`, L: (c, spot) => daySummary(c, spot, y, ds, ps), R: (c, spot) => otdPage(c, spot, y, ds) };
+  sp.next = () => i < n ? daySpread(y, ds, i + 1) : (d => d ? daySpread(y, d, 0) : null)(dates.find(d => d > ds));
+  sp.prev = () => i > 0 ? daySpread(y, ds, i - 1) : (d => d ? daySpread(y, d, 0) : null)([...dates].reverse().find(d => d < ds));
+  return arrows(sp);
+}
+
+// the same day in another year, opened inside the book you are holding
+function visitSpread(yy, key, i, fromY) {
+  const ps = byDate[key] || [], p = ps[i];
+  const sp = { label: `${yy}${ps.length > 1 ? ` (${i + 1} of ${ps.length})` : ''}`,
+    L: (c, spot) => photoPage(c, spot, p, key, ps.length > 1 ? `${i + 1} / ${ps.length}` : ''),
+    R: (c, spot) => textPage(c, spot, p, { heading: yearsAgo(fromY, yy), open: () => jumpTo(yy, key), openLabel: `Open the ${yy} book ›` }) };
+  sp.next = () => i + 1 < ps.length ? visitSpread(yy, key, i + 1, fromY) : null;
+  sp.prev = () => i > 0 ? visitSpread(yy, key, i - 1, fromY) : null;
+  return arrows(sp);
+}
+
+// category books: an index, then every filed page in date order
+function catPages(cat) {
+  if (cat.id === 'starred') return ALLP.filter(p => p.star).sort((a, b) => a.date < b.date ? -1 : 1);
+  const ids = new Set([cat.id, ...CATS.filter(c => c.parent === cat.id).map(c => c.id)]);
+  return ALLP.filter(p => (p.cats || []).some(c => ids.has(c))).sort((a, b) => a.date < b.date ? -1 : 1);
+}
+function catSpread(cat, i = 0) {
+  const ps = catPages(cat), subs = CATS.filter(c => c.parent === cat.id);
+  let sp;
+  if (i === 0) sp = { label: cat.name,
+    L: (c, spot, side) => {
+      T(c, cat.name, CW / 2, 330, SERIF(Math.min(170, Math.round(1700 / Math.max(5, cat.name.length)))), INK, 'center');
+      T(c, ps.length ? `${ps.length} page${ps.length > 1 ? 's' : ''}, ${nice(ps[0].date, false)} ${ps[0].date.slice(0, 4)} to ${nice(ps.at(-1).date, false)} ${ps.at(-1).date.slice(0, 4)}` : 'No pages yet', CW / 2, 420, ITAL(40), FADE, 'center');
+      if (!ps.length) T(c, cat.id === 'starred' ? 'Star a page on the Check the dates screen.' : 'File pages here on the Check the dates screen.', CW / 2, 500, HAND(40), FADE, 'center');
+      if (subs.length) { T(c, 'Inside this book', 85, 600, SERIF(48));
+        subs.forEach((sub, k) => { const ry = 660 + k * 100, n = catPages(sub).length, h = spot(70, ry, CW - 140, 90, () => push(catSpread(sub, 0)));
+          hl(c, 70, ry, CW - 140, 90, h); T(c, sub.name, 100, ry + 60, HAND(48), h ? ACC : INK); T(c, `${n} page${n === 1 ? '' : 's'}`, CW - 100, ry + 60, HAND(38), FADE, 'right'); }); }
+      folio(c, side, 'i');
+    },
+    R: (c, spot, side) => {
+      T(c, 'Pages', 85, 165, SERIF(90));
+      ps.slice(0, 8).forEach((p, k) => { const ry = 215 + k * 135, lead = byId[p.id] || p, h = spot(70, ry, CW - 140, 125, () => go(1, catSpread(cat, k + 1)));
+        hl(c, 70, ry, CW - 140, 125, h);
+        thumb(c, lead, 140, ry + 62, 80, 105, k % 2 ? .03 : -.03, false);
+        T(c, `${lead.star ? '★ ' : ''}${nice(lead.date)}`, 230, ry + 55, HAND(46), h ? ACC : INK);
+        T(c, (lead.title || lead.text || '').replace(/\s+/g, ' ').slice(0, 36), 230, ry + 100, ITAL(34), FADE); });
+      if (ps.length > 8) T(c, `and ${ps.length - 8} more, turn the pages`, 85, CH - 140, ITAL(32), FADE);
+      folio(c, side, 'ii');
+    } };
+  else { const p = ps[i - 1], yy = +p.date.slice(0, 4);
+    sp = { label: `${nice(p.date, false)} ${yy}`, L: (c, spot) => photoPage(c, spot, p, p.date, `${i} / ${ps.length}`),
+      R: (c, spot) => textPage(c, spot, p, { open: () => jumpTo(yy, p.date), openLabel: `Open the ${yy} book ›` }) }; }
+  sp.next = () => i < ps.length ? catSpread(cat, i + 1) : null;
+  sp.prev = () => i > 0 ? catSpread(cat, i - 1) : null;
+  return arrows(sp);
+}
+
+// ---------- page flipping ----------
+function bend(s, t, dir) {
+  s.pivot.rotation.y = -Math.PI * t;
+  const pos = s.geo.attributes.position, lift = Math.sin(Math.PI * t);
+  for (let i = 0; i < pos.count; i++) { const xn = s.base[i * 3] / s.span; pos.setZ(i, -dir * lift * .38 * xn * xn + .01 * lift); }
+  pos.needsUpdate = true; s.geo.computeVertexNormals();
+}
+async function show(sp, dir) {
+  const b = reading;
+  if (!dir) { cur = sp; redraw(); return; }
+  busy = true; spots = { L: [], R: [] }; hoverId = null; $('#gl').style.cursor = 'default';
+  const fc = Fc.getContext('2d'), bc = Bc.getContext('2d');
+  if (dir > 0) {
+    fc.drawImage(Rc, 0, 0); render(Bc, 'L', sp.L, false); render(Rc, 'R', sp.R, false);
+    Ft.needsUpdate = Bt.needsUpdate = Rt.needsUpdate = true; b.sheet.pivot.visible = true; bend(b.sheet, 0, 1);
+    await tween(850, t => bend(b.sheet, t, 1));
+  } else {
+    bc.drawImage(Lc, 0, 0); render(Fc, 'R', sp.R, false); render(Lc, 'L', sp.L, false);
+    Ft.needsUpdate = Bt.needsUpdate = Lt.needsUpdate = true; b.sheet.pivot.visible = true; bend(b.sheet, 1, -1);
+    await tween(850, t => bend(b.sheet, 1 - t, -1));
+  }
+  b.sheet.pivot.visible = false; cur = sp; redraw(); busy = false;
+}
+function crumbs() {
+  $('#crumbs').innerHTML = stack.map((s, i) => i === stack.length - 1 ? `<b>${s.label}</b>` : s.label).join(' › ');
+  $('#back').style.display = mode === 'shelf' ? 'none' : 'inline-block';
+  $('#hint').textContent = mode === 'shelf' ? (camRow ? 'Your category books. Scroll up for the years.' : 'Click a year to open it. Scroll down for your category books.') : 'Arrow keys turn the pages. Esc goes back.';
+}
+async function push(sp) { if (busy || !sp) return; stack.push(sp); crumbs(); await show(sp, 1); }
+async function go(dir, to) { // turn to the next or previous page of the same kind
+  if (busy || mode !== 'read' || !cur) return;
+  if (edP) closeEditor();
+  const sp = to || (dir > 0 ? cur.next?.() : cur.prev?.()); if (!sp) return;
+  stack[stack.length - 1] = sp; crumbs(); await show(sp, dir);
+}
+async function back() {
+  if ($('#lb').style.display === 'flex') return closeLB();
+  if (edP) return closeEditor();
+  if (busy || mode !== 'read') return;
+  if (stack.length > 1) { stack.pop(); crumbs(); await show(stack.at(-1), -1); } else await closeBook();
+}
+
+// ---------- open / close ----------
+const v3 = new THREE.Vector3(), q = new THREE.Quaternion();
+function readPose(b) {
+  const tanH = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+  const d = Math.max(b.H * 1.2 / (2 * tanH), (2 * b.W + .2) * 1.2 / (2 * tanH * camera.aspect));
+  return new THREE.Vector3(0, CAM.y - .15, CAM.z - d);
+}
+async function openBook(key, ds) {
+  if (busy || mode !== 'shelf') return;
+  const b = books[key], year = b.year; busy = true; mode = 'anim'; reading = b; hoverBook = null; $('#tip').style.opacity = 0;
+  if (!b.cat && camRow) { camRow = 0; await tween(700, () => {}); }
+  stack = [b.cat ? catSpread(b.cat, 0) : yearSpread(year)];
+  if (ds && !b.cat) { const m = +ds.slice(5, 7) - 1; stack.push(monthSpread(year, m), daySpread(year, ds, 0)); }
+  cur = stack.at(-1); redraw(); crumbs();
+  scene.attach(b.book);
+  const p0 = b.book.position.clone(), q0 = b.book.quaternion.clone(), tgt = readPose(b);
+  const p1 = tgt.clone().setX(-b.W / 2), q1 = new THREE.Quaternion().setFromEuler(new THREE.Euler(-.05, 0, 0));
+  await tween(1150, t => { b.book.position.lerpVectors(p0, p1, t); b.book.position.z += Math.sin(t * Math.PI) * .9; b.book.position.y += Math.sin(t * Math.PI) * .25; b.book.quaternion.slerpQuaternions(q0, q1, t); });
+  await tween(1050, t => { b.cover.rotation.y = -Math.PI * t; b.book.position.x = -b.W / 2 * (1 - t); });
+  mode = 'read'; busy = false; crumbs();
+}
+async function closeBook() {
+  const b = reading; busy = true; mode = 'anim'; spots = { L: [], R: [] }; stack = []; crumbs();
+  await tween(900, t => { b.cover.rotation.y = -Math.PI * (1 - t); b.book.position.x = -b.W / 2 * t; });
+  b.holder.attach(b.book);
+  const p0 = b.book.position.clone(), q0 = b.book.quaternion.clone();
+  await tween(1050, t => { b.book.position.lerpVectors(p0, v3.set(0, 0, 0), t); b.book.position.z += Math.sin(t * Math.PI) * .6; b.book.quaternion.slerpQuaternions(q0, b.restQ, t); });
+  reading = null; cur = null; mode = 'shelf'; busy = false; crumbs();
+}
+async function jumpTo(year, ds) {
+  if (mode === 'read' && reading.year === year) return push(daySpread(year, ds, 0));
+  if (mode === 'read') await closeBook();
+  await openBook(year, ds);
+}
+
+// ---------- editing a page beside the book ----------
+const DOTS = ['#3fbf8f', '#ef8a4b', '#e8c547', '#e77a8f', '#5b7cf0', '#9a7fd1', '#2fa36b', '#d4553f', '#7fb3c8', '#b5a17a'];
+const catColor = id => DOTS[[...id].reduce((a, ch) => a + ch.charCodeAt(0), 0) % DOTS.length];
+const ed = $('#ed');
+let edP = null, edCats = new Set(), edFocus = null, edStar = false;
+function openEditor(p0, focus) {
+  const p = byId[p0.id] || p0; edP = p; edCats = new Set(p.cats || []); edStar = !!p.star;
+  edFocus = CATS.find(c => !c.parent && (edCats.has(c.id) || CATS.some(x => x.parent === c.id && edCats.has(x.id))))?.id || null;
+  $('#edDate').textContent = nice(p.date);
+  $('#edTitle').value = p.title || ''; $('#edText').value = p.text || ''; $('#edNote').value = p.note || '';
+  $('#edPics').innerHTML = [p.image && '/' + p.image, ...(p.attachments || []).map(a => '/' + a)].filter(Boolean).map(s => `<img src="${s}" alt="">`).join('');
+  drawSpaces(); ed.hidden = false;
+  ({ note: $('#edNote'), text: $('#edText'), cats: $('#edCatsLab') })[focus]?.scrollIntoView({ block: 'center' });
+  if (focus === 'note') $('#edNote').focus(); else if (focus === 'text') $('#edText').focus();
+}
+function closeEditor() { ed.hidden = true; edP = null; }
+function drawSpaces() {
+  $('#edStar').textContent = edStar ? '★' : '☆'; $('#edStar').setAttribute('aria-pressed', edStar);
+  const pill = c => `<button class="pill ${edFocus === c.id ? 'focus' : ''}" data-cat="${c.id}" aria-pressed="${edCats.has(c.id)}"><i style="--c:${catColor(c.id)}"></i>${c.name.replace(/</g, '&lt;')}</button>`;
+  $('#edSpaces').innerHTML = CATS.filter(c => !c.parent).map(pill).join('') + `<button class="pill new" id="newCat">+ New category</button>`;
+  const f = CATS.find(c => c.id === edFocus), ins = $('#edInside');
+  ins.hidden = !f;
+  if (f) ins.innerHTML = `<p>Inside ${f.name.replace(/</g, '&lt;')} (optional)</p><div class="row">${CATS.filter(c => c.parent === f.id).map(pill).join('')}<button class="pill new" id="newSub">+ Subcategory</button></div>`;
+}
+function inlineAdd(btn, parent) {
+  btn.outerHTML = `<span class="pill new"><input id="catIn" placeholder="${parent ? 'Subcategory name' : 'Category name'}" aria-label="New category name"></span>`;
+  const inp = $('#catIn'); inp.focus();
+  inp.onkeydown = async e => {
+    if (e.key === 'Escape') { e.stopPropagation(); drawSpaces(); return; }
+    if (e.key !== 'Enter' || !inp.value.trim()) return;
+    e.preventDefault();
+    const d = await fetch('/api/cats', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ op:'add', name: inp.value.trim(), parent }) }).then(r => r.json()).catch(() => null);
+    if (!d || d.error) return;
+    const made = d.categories.filter(c => !CATS.some(o => o.id === c.id))[0];
+    CATS = d.categories; if (made) { edCats.add(made.id); if (!parent) edFocus = made.id; }
+    drawSpaces();
+  };
+  inp.onblur = () => setTimeout(() => { if ($('#catIn') === inp) drawSpaces(); }, 150);
+}
+ed.onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'newCat') return inlineAdd(b, null);
+  if (b.id === 'newSub') return inlineAdd(b, edFocus);
+  if (b.dataset.cat) { const id = b.dataset.cat, c = CATS.find(x => x.id === id);
+    if (edCats.has(id) && (c.parent || edFocus === id)) edCats.delete(id); else edCats.add(id);
+    if (!c.parent) edFocus = id; drawSpaces(); }
+};
+$('#edStar').onclick = () => { edStar = !edStar; drawSpaces(); };
+$('#edX').onclick = closeEditor;
+$('#edPhoto').onclick = () => { if (edP) attachTo(edP); };
+async function saveEditor() {
+  if (!edP) return;
+  const patch = { page: edP.id, note: $('#edNote').value.trim(), cats: [...edCats], star: edStar };
+  if ($('#edText').value !== (edP.text || '')) patch.text = $('#edText').value;
+  if ($('#edTitle').value !== (edP.title || '')) patch.title = $('#edTitle').value.trim();
+  $('#edSave').textContent = 'Saving…';
+  await fetch('/api/meta', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(patch) }).catch(() => null);
+  $('#edSave').textContent = 'Save'; closeEditor(); await refreshData();
+}
+$('#edSave').onclick = saveEditor;
+ed.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { e.stopPropagation(); closeEditor(); }
+  if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); saveEditor(); }
+});
+
+// ---------- photos, stars ----------
+function attachTo(p) { const inp = $('#attachIn'); inp.dataset.page = p.id; inp.click(); }
+$('#attachIn').onchange = async e => {
+  const inp = e.target, files = [...inp.files]; inp.value = ''; if (!files.length) return;
+  $('#hint').textContent = 'Adding your photo…';
+  for (const f of files) await fetch(`/api/attach?page=${encodeURIComponent(inp.dataset.page)}&name=${encodeURIComponent(f.name)}`, { method:'POST', body:f }).catch(() => null);
+  await refreshData(); crumbs();
+  if (edP) openEditor(edP);
+};
+async function setMeta(p, patch) {
+  await fetch('/api/meta', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ page: p.id, ...patch }) }).catch(() => null);
+  await refreshData();
+}
+async function refreshData() {
+  const d = await fetch('/data.json').then(r => r.json());
+  const fresh = d.pages.filter(p => !p.dropped && p.date && (p.image || p.typed));
+  for (const k of Object.keys(byDate)) delete byDate[k];
+  for (const p of fresh) { (byDate[p.date] ??= []).push(p); byId[p.id] = p; }
+  ALLP = fresh; CATS = d.categories || [];
+  preload(fresh);
+  if (cur && !busy) redraw();
+}
+
+// ---------- lightbox ----------
+function openLB(p, ds) { const lb = $('#lb'); lb.querySelector('img').src = '/' + p.image; lb.querySelector('div').textContent = nice(ds); lb.style.display = 'flex'; }
+function closeLB() { $('#lb').style.display = 'none'; }
+$('#lb').onclick = closeLB;
+
+// ---------- lamp + light mode ----------
+const glowTex = (() => { const c = mk(256, 256), x = c.getContext('2d'), g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+  g.addColorStop(0, 'rgba(255,214,150,1)'); g.addColorStop(.25, 'rgba(255,150,70,.55)'); g.addColorStop(1, 'rgba(255,120,40,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256); return tex(c); })();
+const black = new THREE.MeshStandardMaterial({ color: 0x18130f, metalness: .55, roughness: .4 });
+const oak = new THREE.MeshStandardMaterial({ color: 0x6b4a2e, roughness: .6 });
+const glows = [], shades = [], lights = [];
+const opalGrad = (() => { const c = mk(8, 256), x = c.getContext('2d'), g = x.createLinearGradient(0, 0, 0, 256);
+  g.addColorStop(0, '#4a2c14'); g.addColorStop(.45, '#c98a4c'); g.addColorStop(.8, '#ffd9a6'); g.addColorStop(1, '#fff2dc'); x.fillStyle = g; x.fillRect(0, 0, 8, 256); return tex(c); })();
+const opal = (grad = true) => { const m = new THREE.MeshPhysicalMaterial({ color: 0xe6ded2, roughness: .42, clearcoat: .7, clearcoatRoughness: .22, emissive: 0xffc890, emissiveMap: grad ? opalGrad : null, emissiveIntensity: 0, envMapIntensity: .8 }); shades.push(m); return m; };
+const lathe = (pts, mat, y, parent, seg = 64) => mesh(new THREE.LatheGeometry(pts.map(([x, yy]) => new THREE.Vector2(x, yy)), seg), mat, y, parent);
+const roundDisc = (r, h, c) => { // flat disc with rounded rim, bottom centre to top centre
+  const p = [[0, -h / 2]];
+  for (let i = 0; i <= 6; i++) { const t = -Math.PI / 2 + i / 6 * Math.PI / 2; p.push([r - c + Math.cos(t) * c, -h / 2 + c + Math.sin(t) * c]); }
+  for (let i = 0; i <= 6; i++) { const t = i / 6 * Math.PI / 2; p.push([r - c + Math.cos(t) * c, h / 2 - c + Math.sin(t) * c]); }
+  p.push([0, h / 2]); return p; };
+const mesh = (geo, mat, y = 0, parent) => { const m = new THREE.Mesh(geo, mat); m.position.y = y; m.castShadow = true; parent && parent.add(m); return m; };
+function addGlow(parent, size, y = 0, sx = 1) { const g = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); g.scale.set(size * sx, size, 1); g.position.y = y; parent.add(g); glows.push(g); return g; }
+function addLight(parent, power, y = 0) { const l = new THREE.PointLight(0xffa25a, 0, 0, 1.6); l.position.y = y; l.userData.power = power; parent.add(l); lights.push(l); return l; }
+const wire = parent => mesh(new THREE.CylinderGeometry(.004, .004, 3, 8), black, 1.55, parent);
+
+// pendants hang in the room in front of the shelves, wires running up out of frame
+const capPts = [[0, 0], [.03, 0], [.034, .012], [.034, .085], [.02, .1], [.006, .104], [0, .104]];
+// left: double puck pendant, the one with the pull cord
+const lamp = new THREE.Group(); lamp.position.set(-2.55, 3.05, 2.0); scene.add(lamp);
+lathe(capPts, black, .045, lamp, 32); mesh(new THREE.CylinderGeometry(.005, .005, 4, 8), black, 2.15, lamp);
+const puckA = lathe(roundDisc(.17, .056, .022), opal(), .012, lamp);
+const puckB = lathe(roundDisc(.17, .056, .022), opal(), -.085, lamp);
+mesh(new THREE.CylinderGeometry(.1, .1, .045, 48), opal(false), -.036, lamp);
+addGlow(lamp, 1.35, -.04, 1.15); addLight(lamp, 5, -.06);
+const cord = new THREE.Group(); cord.position.set(.035, .07, .02);
+const CORD = .62, CY = .07;
+mesh(new THREE.CylinderGeometry(.0028, .0028, CORD, 6), new THREE.MeshStandardMaterial({ color: 0xcdbb9a, roughness: .9 }), -CORD / 2, cord);
+mesh(new THREE.SphereGeometry(.02, 16, 12), oak, -CORD - .015, cord);
+const grab = mesh(new THREE.CylinderGeometry(.07, .07, CORD + .15, 8), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), -CORD / 2 - .04, cord);
+lamp.add(cord);
+
+// right: mushroom pendant
+const lamp2 = new THREE.Group(); lamp2.position.set(2.65, 3.15, 1.6); scene.add(lamp2);
+lathe([[0, 0], [.034, 0], [.04, .03], [.03, .1], [.014, .115], [0, .115]], oak, .095, lamp2, 32); mesh(new THREE.CylinderGeometry(.005, .005, 4, 8), black, 2.2, lamp2);
+const mushPts = []; for (let i = 0; i <= 24; i++) { const t = i / 24 * Math.PI; const sx = Math.sin(t), cy = -Math.cos(t); mushPts.push([.215 * Math.sign(sx) * Math.abs(sx) ** .72, .125 * Math.sign(cy) * Math.abs(cy) ** .9]); }
+mushPts[0][0] = 0; mushPts[mushPts.length - 1][0] = 0;
+const mush = lathe(mushPts, opal(), 0, lamp2);
+addGlow(lamp2, 1.5, -.02, 1.2); addLight(lamp2, 5, -.05);
+
+// on the shelf: dome table lamp lighting the year books
+const table = new THREE.Group(); table.position.set(-2.08, SHELF[1], -.55); scene.add(table);
+mesh(new THREE.CylinderGeometry(.13, .14, .035, 40), black, .018, table);
+mesh(new THREE.CylinderGeometry(.022, .022, .78, 16), black, .41, table);
+const dome = mesh(new THREE.SphereGeometry(.3, 48, 16, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x18130f, metalness: .55, roughness: .4, side: THREE.DoubleSide }), .78, table);
+dome.scale.y = .62; mesh(new THREE.SphereGeometry(.028, 16, 12), black, .78 + .3 * .62, table);
+const bulb = mesh(new THREE.SphereGeometry(.05, 20, 16), opal(), .77, table);
+addGlow(table, 1.9, .55, 1.5);
+const pool = new THREE.SpotLight(0xffb070, 0, 5, 1.15, .9, 1.4); pool.position.set(0, .75, 0); pool.target.position.set(0, -1, 0);
+pool.userData.power = 30; table.add(pool, pool.target); lights.push(pool);
+
+const washTex = (() => { const c = mk(256, 256), x = c.getContext('2d'), g = x.createRadialGradient(128, 128, 0, 128, 128, 128);
+  g.addColorStop(0, 'rgba(232,137,74,.55)'); g.addColorStop(.45, 'rgba(214,112,58,.22)'); g.addColorStop(1, 'rgba(200,100,50,0)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256); return tex(c); })();
+const washes = [];
+for (const [x, y, z, w, h] of [[-2.08, 1.0, -1.98, 3.2, 2.6], [-2.6, 3.2, -1.98, 3.4, 3.0], [2.7, 3.2, -1.98, 3.4, 3.0]]) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ map: washTex, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending }));
+  m.position.set(x, y, z); scene.add(m); washes.push(m);
+}
+const lampHits = [puckA, puckB, grab, mush, dome, bulb];
+
+const DARK = { bg: new THREE.Color(0x120d0a), wall: new THREE.Color(0x1b120b), hemi: .55, spot: 260, exp: 1.05 };
+const LIGHT = { bg: new THREE.Color(0x4e4038), wall: new THREE.Color(0x6f5f53), hemi: .8, spot: 230, exp: 1.08 };
+const hemi = scene.children.find(o => o.isHemisphereLight);
+let lightAmt = 0, lampOn = false;
+function applyLight(a) {
+  lightAmt = a;
+  scene.background.copy(DARK.bg).lerp(LIGHT.bg, a); scene.fog.color.copy(scene.background);
+  wall.material.color.copy(DARK.wall).lerp(LIGHT.wall, a);
+  hemi.intensity = DARK.hemi + (LIGHT.hemi - DARK.hemi) * a;
+  spot.intensity = DARK.spot + (LIGHT.spot - DARK.spot) * a;
+  renderer.toneMappingExposure = DARK.exp + (LIGHT.exp - DARK.exp) * a;
+  shades.forEach(m => m.emissiveIntensity = a * 1.5); glows.forEach(g => g.material.opacity = a * .8); washes.forEach(w => w.material.opacity = a); lights.forEach(l => l.intensity = a * l.userData.power);
+}
+const flick = t => t < .32 ? (Math.random() < .45 ? 0.05 : t * 1.6) * (0.6 + Math.random() * .4) : ease((t - .32) / .68) * .9 + .1;
+let lampBusy = false;
+async function pullCord() {
+  if (lampBusy) return; lampBusy = true;
+  await tween(170, t => { cord.position.y = CY - .09 * t; });
+  lampOn = !lampOn;
+  try { localStorage.setItem('lamp', lampOn ? 'on' : 'off'); } catch (e) {}
+  document.documentElement.dataset.theme = lampOn ? 'light' : 'dark';
+  const from = lightAmt;
+  const spring = tween(520, t => { cord.position.y = CY - .09 * Math.exp(-5 * t) * Math.cos(t * 11); });
+  if (lampOn) await tween(1900, t => applyLight(Math.max(from, flick(t))));
+  else await tween(800, t => applyLight(from * (1 - t)));
+  await spring; lampBusy = false;
+}
+try { if (localStorage.getItem('lamp') === 'on') { lampOn = true; document.documentElement.dataset.theme = 'light'; applyLight(1); } } catch (e) {}
+
+// ---------- input ----------
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(), mouse = { x: 0, y: 0 };
+const tip = $('#tip');
+function overLamp(e) {
+  ndc.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1); ray.setFromCamera(ndc, camera);
+  return ray.intersectObjects(lampHits, false).length > 0;
+}
+function pick(e) {
+  ndc.set(e.clientX / innerWidth * 2 - 1, -e.clientY / innerHeight * 2 + 1); ray.setFromCamera(ndc, camera);
+  if (mode === 'shelf') {
+    const hit = ray.intersectObjects(yearBooks.map(b => b.book), true)[0];
+    if (!hit) return { book: null };
+    let o = hit.object; while (o && !yearBooks.some(b => b.book === o)) o = o.parent;
+    return { book: yearBooks.find(b => b.book === o) };
+  }
+  if (mode === 'read' && !busy) {
+    const hit = ray.intersectObjects([reading.L, reading.R])[0];
+    if (!hit) return {};
+    const side = hit.object === reading.L ? 'L' : 'R', x = hit.uv.x * CW, y = (1 - hit.uv.y) * CH;
+    return { spot: spots[side].find(s => x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h) };
+  }
+  return {};
+}
+addEventListener('pointermove', e => {
+  if (demoOn) return;
+  mouse.x = e.clientX / innerWidth - .5; mouse.y = e.clientY / innerHeight - .5;
+  if (overLamp(e)) { $('#gl').style.cursor = 'grab'; tip.innerHTML = lampOn ? 'Pull to turn the lamp off' : 'Pull the cord'; tip.style.left = e.clientX + 16 + 'px'; tip.style.top = e.clientY + 16 + 'px'; tip.style.opacity = 1; hoverBook = null; return; }
+  if (mode !== 'shelf') tip.style.opacity = 0;
+  const r = pick(e);
+  if (mode === 'shelf') {
+    hoverBook = r.book;
+    if (r.book) { const ds = r.book.cat ? [] : datesOf(r.book.year), n = r.book.cat ? catPages(r.book.cat).length : ds.reduce((a, d) => a + byDate[d].length, 0); tip.innerHTML = `<b>${r.book.cat ? r.book.cat.name : r.book.year}</b>${n ? `${n} pages${r.book.cat ? '' : `, ${ds.length} days`}` : 'empty so far'}`; tip.style.left = e.clientX + 16 + 'px'; tip.style.top = e.clientY + 16 + 'px'; tip.style.opacity = 1; }
+    else tip.style.opacity = 0;
+    $('#gl').style.cursor = r.book ? 'pointer' : 'default';
+  } else if (mode === 'read' && !busy) {
+    const id = r.spot ? r.spot.id : null;
+    if (id !== hoverId) { hoverId = id; redraw(); }
+    $('#gl').style.cursor = id ? 'pointer' : 'default';
+  }
+});
+addEventListener('click', e => {
+  if (e.target !== $('#gl') || demoOn) return;
+  if (overLamp(e)) return pullCord();
+  const r = pick(e);
+  if (mode === 'shelf' && r.book) openBook(r.book.key);
+  else if (mode === 'read' && r.spot) r.spot.go();
+});
+let wheelAcc = 0, wheelLock = 0;
+function scrollRow(d) { const r = Math.max(0, Math.min(maxRow, camRow + d)); if (r !== camRow) { camRow = r; hoverBook = null; crumbs(); } }
+addEventListener('wheel', e => { if (mode !== 'shelf') return; wheelAcc += e.deltaY; if (performance.now() < wheelLock || Math.abs(wheelAcc) < 40) return; scrollRow(Math.sign(wheelAcc)); wheelAcc = 0; wheelLock = performance.now() + 600; }, { passive: true });
+$('#home').onclick = async () => { closeLB(); if (mode === 'read' && !busy) await closeBook(); camRow = 0; crumbs(); };
+addEventListener('keydown', e => { if (e.target.matches?.('input, textarea') || demoOn) return;
+  if (mode === 'read' && e.key === 'ArrowRight') { e.preventDefault(); go(1); } if (mode === 'read' && e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+  if (mode === 'shelf' && e.key === 'ArrowDown') { e.preventDefault(); scrollRow(1); } if (mode === 'shelf' && e.key === 'ArrowUp') { e.preventDefault(); scrollRow(-1); } if (e.key === 'Escape' || e.key === 'Backspace') back(); if (e.key === 'l' || e.key === 'L') pullCord(); });
+$('#back').onclick = back;
+$('#otd').textContent = `On this day · ${TODAY.getDate()} ${MS[TODAY.getMonth()]}`;
+$('#otd').onclick = () => jumpTo(thisYear, todayStr);
+addEventListener('resize', () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); if (mode === 'read') reading.book.position.copy(readPose(reading)); });
+
+
+// ---------- demo: a scripted tour to screen-record (button or /library?demo) ----------
+let demoOn = false, demoCam = null, paused = false, demoStop = false, demoPromise = null, demoFrom = null, demoGrace = 0, FOG0 = [scene.fog.near, scene.fog.far];
+const STOP = new Error('demo stopped');
+const wait = ms => new Promise((res, rej) => { let left = ms, last = performance.now();
+  const tick = () => { if (demoStop) return rej(STOP); const now = performance.now(); if (!paused) left -= now - last; last = now; left <= 0 ? res() : setTimeout(tick, 30); }; tick(); });
+const ck = () => { if (demoStop) throw STOP; };
+const dcur = $('#dcur'), V = (x, y, z) => new THREE.Vector3(x, y, z);
+let curXY = [innerWidth / 2, innerHeight * .62];
+function toScreen(w) { const v = w.clone().project(camera); return [(v.x + 1) / 2 * innerWidth, (1 - v.y) / 2 * innerHeight]; }
+function pageXY(side, x, y) { const b = reading, m = side === 'L' ? b.L : b.R, ph = b.H - .12; return toScreen(m.localToWorld(V((x / CW - .5) * b.pw, (.5 - y / CH) * ph, 0))); }
+async function moveCur([x, y], ms = 650) {
+  dcur.style.transition = `opacity .3s, transform ${ms}ms cubic-bezier(.45,0,.2,1)`;
+  dcur.style.transform = `translate(${x - 3}px, ${y - 2}px)`; curXY = [x, y]; await wait(ms);
+}
+async function tap() { const i = dcur.querySelector('i'); i.classList.remove('go'); void i.offsetWidth; i.classList.add('go'); dcur.animate([{ scale: 1 }, { scale: .82 }, { scale: 1 }], { duration: 220 }); await wait(160); }
+async function clickPage(side, x, y, pause = 380) {
+  const s = spots[side].find(o => x >= o.x && x <= o.x + o.w && y >= o.y && y <= o.y + o.h); if (!s) return false;
+  await moveCur(pageXY(side, x, y)); hoverId = s.id; redraw(); await wait(pause); await tap(); ck(); await s.go(); ck(); return true;
+}
+function demoPick() { // a page with a photo whose day was also written in other years
+  let best = null, bs = -1;
+  for (const ds of Object.keys(byDate)) {
+    const y = +ds.slice(0, 4), ps = byDate[ds], md = ds.slice(5); if (!YEARS.includes(y)) continue;
+    const others = YEARS.filter(yy => yy !== y && byDate[`${yy}-${md}`]);
+    const sc = (ps[0].image ? 4 : ps[0].attachments?.length ? 2 : 0) + Math.min(others.length, 3) * 3 + (ps.length === 1 ? 1 : 0) + (ps[0].demo ? 0 : 1) + (y === thisYear ? 0 : .5);
+    if (sc > bs) { bs = sc; best = { y, ds, others }; }
+  }
+  return best;
+}
+function demo() {
+  if (demoOn || busy || !Object.keys(byDate).length) return;
+  demoStop = false; paused = false; demoFrom = null; demoGrace = performance.now() + 3000;
+  demoPromise = demoRun().catch(e => { if (e !== STOP) console.error(e); });
+}
+function setPaused(v) { paused = v; $('#dpause').classList.toggle('on', v); }
+function setLamp(on) { lampOn = on; document.documentElement.dataset.theme = on ? 'light' : 'dark'; try { localStorage.setItem('lamp', on ? 'on' : 'off'); } catch (e) {} }
+function endDemo(why) { // hand the library back to the person
+  if (!demoOn) return;
+  if (lightAmt > 0 && lightAmt < 1) { setLamp(true); applyLight(1); }
+  demoStop = true; setPaused(false); demoOn = false; demoCam = null; hoverId = null;
+  scene.fog.near = FOG0[0]; scene.fog.far = FOG0[1]; $('#fade').style.opacity = 0; dcur.style.opacity = 0;
+  document.body.classList.remove('demo'); if (cur && !busy) redraw(); crumbs();
+}
+async function restartDemo() {
+  endDemo(); await demoPromise;
+  while (busy) await new Promise(r => setTimeout(r, 100));
+  demo();
+}
+addEventListener('keydown', e => {
+  if (!demoOn) return;
+  if (e.key === ' ') { e.preventDefault(); setPaused(!paused); }
+  else if (e.key === 'r' || e.key === 'R') { e.preventDefault(); restartDemo(); }
+  else if (e.key === 'Escape') { e.preventDefault(); endDemo('esc'); }
+});
+addEventListener('pointermove', e => { // taking the mouse stops the tour
+  if (!demoOn || paused || performance.now() < demoGrace) { demoFrom = null; return; } // moving off the button right after clicking is fine
+  if (!demoFrom) { demoFrom = [e.clientX, e.clientY]; return; }
+  if (Math.hypot(e.clientX - demoFrom[0], e.clientY - demoFrom[1]) > 150) endDemo('mouse');
+});
+addEventListener('wheel', () => endDemo('wheel'), { passive: true });
+addEventListener('pointerdown', e => { if (demoOn && !e.target.closest('#demo')) endDemo('click'); });
+async function demoRun() {
+  demoOn = true; document.body.classList.add('demo'); closeLB(); closeEditor(); tip.style.opacity = 0; hoverId = null; mouse.x = mouse.y = 0;
+  const fade = $('#fade'); fade.style.transition = 'none'; fade.style.opacity = 1;
+  if (mode === 'read') await closeBook(); ck();
+  camRow = 0; CAM.y = 1.55; LOOK.y = 1.35; setLamp(true); applyLight(1);
+  const ds = (byDate[todayStr] || []).length > 1 ? todayStr : demoPick().ds, y = +ds.slice(0, 4), b = books[y];
+  camera.position.copy(CAM); camLook.copy(LOOK);
+  // 1. open straight on the shelf, the cursor runs along the year books, each one slides out as it passes
+  const at = yy => { const h = books[yy].holder; h.updateWorldMatrix(true, true); return toScreen(h.getWorldPosition(V(0, 0, 0)).add(V(0, .2, .3))); };
+  const first = at(YEARS[0]);
+  dcur.style.transition = 'none'; dcur.style.transform = `translate(${first[0] - 160}px, ${first[1] + 120}px)`; void dcur.offsetWidth;
+  await wait(80); fade.style.transition = 'opacity .5s ease'; fade.style.opacity = 0; dcur.style.opacity = 1;
+  await moveCur(first, 550);
+  for (const yy of YEARS) { if (yy > y) break; hoverBook = books[yy]; await moveCur(at(yy), yy === YEARS[0] ? 0 : 300); await wait(yy === y ? 450 : 120); }
+  // 2. pull it out
+  hoverBook = b; await tap();
+  dcur.style.opacity = 0; await openBook(y); ck(); dcur.style.opacity = 1; await wait(700);
+  // 4. the month, then the day on the calendar
+  const m = +ds.slice(5, 7) - 1;
+  await clickPage('R', 70 + (m % 3) * 290 + 135, 215 + Math.floor(m / 3) * 285 + 132); await wait(800);
+  const k = (new Date(y, m, 1).getDay() + 6) % 7 + +ds.slice(8) - 1;
+  await clickPage('L', 85 + (k % 7) * 118 + 59, 360 + Math.floor(k / 7) * 118 + 59); await wait(1500);
+  // 5. next entry, next entry, until the page that lists the whole day
+  for (let i = 0; i < (byDate[ds] || []).length && i < 6; i++) { if (!await clickPage('R', CW - 170, CH - 75, 250)) break; await wait(1400); }
+  hoverId = null; redraw(); dcur.style.opacity = 0; demoOn = false; crumbs(); ck();
+  // stays clean for the last frame; the controls come back when the mouse moves
+  setTimeout(() => addEventListener('pointermove', () => document.body.classList.remove('demo'), { once: true }), 400);
+}
+$('#demo').onclick = e => { e.currentTarget.blur(); demo(); };
+if (new URLSearchParams(location.search).has('demo')) setTimeout(demo, 900);
+
+// ---------- loop ----------
+const clock = new THREE.Clock(), camLook = LOOK.clone(); let lastNow = performance.now();
+renderer.setAnimationLoop(() => {
+  const now = performance.now(), dt = Math.min(clock.getDelta(), .05);
+  if (paused) for (const tw of tweens) tw.s += now - lastNow;
+  lastNow = now;
+  for (const tw of tweens) { const t = Math.min(1, (now - tw.s) / tw.ms); tw.fn(ease(t)); if (t >= 1) { tweens.delete(tw); tw.r(); } }
+  for (const b of yearBooks) {
+    const on = mode === 'shelf' && hoverBook === b;
+    b.holder.position.z += ((on ? .55 : 0) - b.holder.position.z) * Math.min(1, dt * 10);
+    b.holder.rotation.x += ((on ? .07 : 0) - b.holder.rotation.x) * Math.min(1, dt * 10);
+  }
+  if (demoCam) { camera.position.copy(demoCam.pos); camLook.copy(demoCam.look); camera.lookAt(camLook); } else {
+  const k = mode === 'shelf' ? .35 : .06;
+  camera.position.x += (CAM.x + mouse.x * k - camera.position.x) * Math.min(1, dt * 3);
+  camera.position.y += (CAM.y - mouse.y * k * .5 - camera.position.y) * Math.min(1, dt * 3);
+  if (!paused) CAM.y += (1.55 - camRow * ROWH - CAM.y) * Math.min(1, dt * 4); LOOK.y = CAM.y - .2;
+  camera.position.z += (CAM.z - camera.position.z) * Math.min(1, dt * 3);
+  camLook.lerp(LOOK, Math.min(1, dt * 4)); camera.lookAt(camLook); }
+  fill.position.copy(camera.position);
+  lamp.rotation.z = Math.sin(now / 1400) * .004; lamp2.rotation.z = Math.sin(now / 1700 + 2) * .004; cord.rotation.z = Math.sin(now / 900 + 1) * .03;
+  fill.intensity += ((mode === 'shelf' ? 0 : 2.2) - fill.intensity) * Math.min(1, dt * 3);
+  renderer.render(scene, camera);
+});
+$('#load').style.opacity = 0; setTimeout(() => $('#load').remove(), 700);
+</script>
+</body>
+</html>

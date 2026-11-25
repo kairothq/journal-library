@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Journal Login</title>
+<style>
+  :root { --bg:#1a120d; --ink:#efe3cf; --muted:#a8957d; --line:rgba(239,227,207,.16); --acc:#c99a5b; --acc-ink:#1a120d; --serif:Georgia,serif; --sans:system-ui,sans-serif; }
+  :root[data-theme="light"] { --bg:#d8d0c5; --ink:#4a1d14; --muted:#7a5d50; --line:rgba(74,29,20,.2); --acc:#7a2a1a; --acc-ink:#f4ece1; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; min-height:100%; background:var(--bg); color:var(--ink); font:16px/1.5 var(--sans); }
+  body { display:grid; place-items:center; min-height:100vh; padding:24px 16px;
+    background:radial-gradient(520px circle at 50% 8%, rgba(236,140,72,.22), transparent 70%), var(--bg); }
+  form { width:min(360px, 100%); }
+  h1 { font:400 40px/1.1 var(--serif); margin:0 0 8px; }
+  p { color:var(--muted); margin:0 0 26px; }
+  label { display:block; font-weight:600; font-size:14px; margin-bottom:6px; }
+  input { width:100%; background:transparent; color:var(--ink); border:0; border-bottom:1.5px solid var(--line); padding:10px 2px; font:500 18px var(--sans); }
+  input:focus { outline:none; border-color:var(--acc); }
+  button { margin-top:24px; width:100%; background:var(--acc); color:var(--acc-ink); border:0; border-radius:8px; padding:13px; font:600 15px var(--sans); cursor:pointer; }
+  button:focus-visible, input:focus-visible { outline:2px solid var(--acc); outline-offset:3px; }
+  .err { color:#d0705f; min-height:24px; margin-top:12px; font-size:14px; }
+</style>
+<script src="/theme.js"></script>
+</head>
+<body>
+<form id="f">
+  <h1>Your journal</h1>
+  <p>It's locked. Enter the password you set on your Mac.</p>
+  <label for="pw">Password</label>
+  <input type="password" id="pw" autocomplete="current-password" autofocus required>
+  <button type="submit">Open the journal</button>
+  <div class="err" id="err" role="alert"></div>
+</form>
+<script>
+document.getElementById('f').onsubmit = async e => {
+  e.preventDefault();
+  const r = await fetch('/api/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ password: document.getElementById('pw').value }) }).catch(() => null);
+  if (r && r.ok) location.href = location.pathname === '/login' ? '/library' : location.href;
+  else document.getElementById('err').textContent = r ? 'That password isn\'t right.' : 'Can\'t reach the journal right now.';
+};
+</script>
+</body>
+</html>
